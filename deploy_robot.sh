@@ -15,10 +15,6 @@ declare -A CONFIG_NANME=(
     ["CTRL_HOST"]="control.host"
     ["USER"]="control.user"
     ["PASSWD"]="control.passwd"
-    ["TMP"]="control.tmp.path"
-    ["HOSTS"]="control.hosts.path"
-    ["EXPECT"]="control.expect.path"
-    ["PY_REQUIRE"]="control.python.requirements.path"
     ["CONTRAST"]="contrast.host"
     ["DB_HOST"]="mysql.host"
     ["DB_DATA_DIR"]="mysql.data.dir"
@@ -129,7 +125,8 @@ function get_home {
 function init_hosts {
     # 解析主机列表
     info "hosts loading..."
-    info "get host_file $host_file"
+    info "get host_file $SELF/hosts"
+    host_file=$SELF/hosts
     have $host_file
     declare -A hostip_map=()
     host_arr=`cat $host_file | sed s'/ /,/'`
@@ -158,7 +155,9 @@ function set_hosts {
     info "start setting /etc/hosts and config ssh keys"
     yum install -y expect
     need_cmd expect
-    info "get expect_file $expect_file"
+    info "get expect_file from github"
+    wget -P $tmp_path https://raw.githubusercontent.com/chubbyjiang/cdh-deploy-robot/master/expect.sh
+    expect_file=$tmp_path/expect.sh
     have $expect_file
     cat /etc/hosts | head -n 2 > /etc/hosts
     cat $host_file >> /etc/hosts
@@ -393,6 +392,7 @@ function set_python {
     ansible all -m shell -a "pip3.6 install --upgrade setuptools && easy_install-3.6 -U setuptools && pip3.6 install --upgrade pip"
     # python依赖包安装
     info "install requirements"
+    python_require_path=$SELF/requirements.txt
     have $python_require_path
     info "get requirements file: $python_require_path"
     ansibe all -m copy -a "src=$python_require_path dest=$python_require_path"
@@ -826,6 +826,10 @@ function init_cm {
     set_cm
 }
 
+SELF=$(cd $(dirname $0) && pwd)
+cd $SELF
+tmp_path=/tmp
+
 info "start deploy process"
 init_config $1
 # 控制主机与用户名、密码
@@ -833,10 +837,6 @@ get_config ${CONFIG_NANME[EXEC]} exec
 get_config ${CONFIG_NANME[CTRL_HOST]} ctrl_host
 get_config ${CONFIG_NANME[USER]} user
 get_config ${CONFIG_NANME[PASSWD]} passwd
-get_config ${CONFIG_NANME[TMP]} tmp_path
-get_config ${CONFIG_NANME[HOSTS]} host_file
-get_config ${CONFIG_NANME[EXPECT]} expect_file
-get_config ${CONFIG_NANME[PY_REQUIRE]} python_require_path
 get_config ${CONFIG_NANME[CONTRAST]} contrast_host
 get_config ${CONFIG_NANME[DB_HOST]} db_host
 get_config ${CONFIG_NANME[DB_DATA_DIR]} db_data_dir
