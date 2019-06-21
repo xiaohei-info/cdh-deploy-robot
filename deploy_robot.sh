@@ -258,8 +258,8 @@ function set_dns {
     info "dns done"
 }
 
-function set_ntp{
-# ntp配置
+function set_ntp {
+    # ntp配置
     info "start ntp server"
     info "change timezone info to Shanghai"
     ansible all -m shell -a "rm -rf /etc/localtime && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime"
