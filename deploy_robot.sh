@@ -102,6 +102,7 @@ function init_config {
         config_map[$key]=$value
     done
     info "config load finished"
+    echo 
 }
 
 function get_home {
@@ -112,6 +113,7 @@ function get_home {
         user_home="/home/$user"
     fi
     info "operate user home : $user_home"
+    echo
 }
 
 
@@ -141,6 +143,7 @@ function init_hosts {
     ips=${hostip_map[@]} 
     info "ips: ${ip[*]}"
     info "hosts load finished"
+    echo
 }
 
 function set_hosts {
@@ -179,6 +182,7 @@ function set_hosts {
         expect $expect_file scp $host $user $passwd $user_home/.ssh/authorized_keys
     done
     info "scp authorized_keys done"
+    echo
 }
 
 function install_ansible {
@@ -189,6 +193,7 @@ function install_ansible {
     echo "[all]" > /etc/ansible/hosts
     echo ${hosts[*]} >> /etc/ansible/hosts
     info "ansible finish config"
+    echo
 }
 
 function set_selinux {
@@ -206,6 +211,7 @@ function set_selinux {
     info "sync to hosts"
     ansible all -m copy -a "src=/etc/selinux/config dest=/etc/selinux/config"
     info "done"
+    echo
 }
 
 #ipv6设置
@@ -225,6 +231,7 @@ function set_ipv6 {
         ansible all -m copy -a "src=/etc/default/grub dest=/etc/default/grub"
     fi   
     info "done"
+    echo
 }
 
 
@@ -239,6 +246,7 @@ function set_firewall {
     ansible all -a "service iptables status"
     ansible all -a "service iptables stop" 
     info "firewalld disabled"
+    echo
 }
 
 
@@ -256,6 +264,7 @@ function set_dns {
     info "sync to hosts"
     ansible all -m copy -a "src=/etc/resolv.conf dest=/etc/resolv.conf"
     info "dns done"
+    echo
 }
 
 function set_ntp {
@@ -276,6 +285,7 @@ function set_ntp {
     ansible all -a "systemctl start ntpd"
     ansible all -a "systemctl enable ntpd"
     info "ntp done"
+    echo
 }
 
 function set_yum {
@@ -293,6 +303,7 @@ function set_yum {
     info "install softs"
     ansible all -a "yum install -y net-tools iotop zip unzip telnet wget iperf fio ntfs-3g lzo iftop"
     info "done"
+    echo
 }
 
 function set_java {
@@ -307,6 +318,7 @@ function set_java {
     info "jdk path: $jdk_path"
     ansible all -m copy -a "rm -rf /usr/java/default && ln -s $jdk_path /usr/java/default"
     info "done"
+    echo
 }
 
 function set_scala {
@@ -321,6 +333,7 @@ function set_scala {
     ansible all -m copy -a "src=$scala_file dest=$scala_file"
     ansible all -m shell -a "tar -zxvf $scala_file && rm -rf $scala_file"
     info "done"
+    echo
 }
 
 function set_profile {
@@ -336,6 +349,7 @@ function set_profile {
         ansible all -a "source /etc/profile"
     fi
     info "done"
+    echo
 }
 
 function set_python {
@@ -391,6 +405,7 @@ function set_python {
     ansibe all -m copy -a "src=$python_require_path dest=$python_require_path"
     ansible all -a "pip3.6 install -r $python_require_path"
     info "done"
+    echo
 }
 
 function set_tuned {
@@ -405,6 +420,7 @@ function set_tuned {
     ansible all -a "systemctl stop tuned"
     ansible all -a "systemctl disable tuned"    
     info "done"
+    echo
 }
 
 function set_hugepage {
@@ -438,6 +454,7 @@ function set_hugepage {
         ansible all -a "grub2-mkconfig -o /boot/grub2/grub.cfg"
     fi
     info "done"
+    echo
 }
 
 function set_swappiness {
@@ -454,6 +471,7 @@ function set_swappiness {
         ansible all -m copy -a "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
     fi
     info "done"
+    echo
 }
 
 function set_tmout {
@@ -468,6 +486,7 @@ function set_tmout {
         info "tmout already installed"
     fi
     info "done"
+    echo
 }
 
 function set_kernel {
@@ -497,6 +516,7 @@ function set_kernel {
         info "kernel already installed"
     fi
     info "done"
+    echo
 }
 
 function set_maxfiles {
@@ -514,6 +534,7 @@ function set_maxfiles {
         info "ulimit already installed"
     fi
     info "done"
+    echo
 }
 
 function get_sysinfo {
@@ -542,6 +563,7 @@ function get_sysinfo {
     # fdisk -l
     # lsblk -d -o name,rota
     # df -TH   
+    echo
 }
 
 function test_network {
@@ -554,6 +576,7 @@ function test_network {
     echo "####network test####" > $test_result_file
     iperf3 -c $contrast_host -p 12345 -i 1 -t 10 -w 100K >> $test_result_file
     info "test done,save result to $test_result_file"
+    echo
 }
 
 function test_io {
@@ -576,6 +599,7 @@ function test_io {
     echo "----mix raddom read/write----" >> $test_result_file
     fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=randrw -rwmixread=30 -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -ioscheduler=noop -allow_mounted_write=1 >> $test_result_file
     info "test done,save result to $test_result_file"
+    echo
 }
 
 function set_mysql {
@@ -716,6 +740,7 @@ EOF
     INNER
 EOF
     info "done"
+    echo
 }
 
 function set_cm {
@@ -771,6 +796,7 @@ function set_cm {
     # 各个节点上启动agent
     ansible all -a "systemctl start cloudera-scm-agent"
     info "done"
+    echo
 }
 
 function init_ssh {
