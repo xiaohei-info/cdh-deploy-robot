@@ -22,6 +22,7 @@ declare -A CONFIG_NANME=(
     ["CM_DB_PASSWD"]="cm_db_passwd"
     )
 
+declare -A config_map=()
 
 export TOP_PID=$$
 trap 'exit 1' TERM
@@ -92,7 +93,6 @@ function init_config {
     config_file=$1
     info "get config_file $config_file"
     have $config_file
-    declare -A config_map=()
     config_arr=`cat $config_file | grep '='`
     for c in ${config_arr}
     do
