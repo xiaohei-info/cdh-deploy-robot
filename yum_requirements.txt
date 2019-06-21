@@ -1,0 +1,12 @@
+net-tools
+iotop
+zip
+unzip
+telnet
+wget
+iperf3
+fio
+ntfs-3g
+lzo
+iftop
+vim
