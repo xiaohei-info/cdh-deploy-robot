@@ -18,9 +18,13 @@ proc connect {passwd} {
                 }
            }
        }
-       "*password:" {
+       "*'s password:" {
            send "$passwd\n"
            expect {
+                "Overwrite (y/n)" {
+                    send "y\n"
+                    exp_continue
+                }
                 "*file in which to save the key*" {
                     send "\n"
                     exp_continue
@@ -39,10 +43,10 @@ proc connect {passwd} {
            }
        }
        "enter for none" { send "\n"; exp_continue}
-       "Y/n" { send "Y\n" ; exp_continue}
-       "password:" { send "$passwd\n"; exp_continue}
-       "new password:" { send "$passwd\n"; exp_continue}
-       "Y/n" { send "Y\n" ; exp_continue}
+       "Y/n" { send "Y\n" ; exp_continue}
+       "password:" { send "$passwd\n"; exp_continue}
+       "new password:" { send "$passwd\n"; exp_continue}
+       "Y/n" { send "Y\n" ; exp_continue}
    }
    return 1
 }
@@ -61,6 +65,11 @@ if {$exec == "ssh"} {
     }
 } elseif {$exec == "scp"} {
     spawn scp $cmd $user@$host:$cmd
+    if {[connect $passwd]} {
+        exit 1
+    }
+} elseif {$exec == "get"} {
+    spawn scp $user@$host:$cmd $cmd
     if {[connect $passwd]} {
         exit 1
     }

@@ -23,6 +23,7 @@ declare -A CONFIG_NANME=(
     )
 
 declare -A config_map=()
+declare -A hostip_map=()
 
 export TOP_PID=$$
 trap 'exit 1' TERM
@@ -123,7 +124,6 @@ function init_hosts {
     info "get host_file $SELF/hosts"
     host_file=$SELF/hosts
     have $host_file
-    declare -A hostip_map=()
     host_arr=`cat $host_file | sed s'/ /,/'`
     for a in ${host_arr[*]}
     do
@@ -138,10 +138,10 @@ function init_hosts {
     done
     #key
     hosts=${!hostip_map[@]} 
-    info "hosts: ${hosts[*]}"
+    info "hosts: $hosts"
     #value
     ips=${hostip_map[@]} 
-    info "ips: ${ip[*]}"
+    info "ips: $ips"
     info "hosts load finished"
     echo
 }
@@ -151,11 +151,16 @@ function set_hosts {
     info "start setting /etc/hosts and config ssh keys"
     yum install -y expect
     need_cmd expect
-    info "get expect_file from github"
-    wget -P $tmp_path https://raw.githubusercontent.com/chubbyjiang/cdh-deploy-robot/master/expect.sh
-    expect_file=$tmp_path/expect.sh
+    expect_file=$SELF/expect.sh
     have $expect_file
-    cat /etc/hosts | head -n 2 > /etc/hosts
+    if [ -f /tmp/hosts.bak ]
+    then
+        info "restore hosts from /tmp/hosts.bak"
+        cat /tmp/hosts.bak > /etc/hosts
+    else
+        info "backup hosts file to /tmp/hosts.bak"
+        cat /etc/hosts > /tmp/hosts.bak
+    fi
     cat $host_file >> /etc/hosts
     info "hosts added to /etc/hosts"
     curr_hosts=`cat /etc/hosts`
@@ -163,25 +168,22 @@ function set_hosts {
     info "start config ssh key(all hosts)"
     for host in ${hosts[*]}
     do
-        info "set hostname $host"
+        expect $expect_file ssh $host $user $passwd "rm -rf $user_home/.ssh"
         expect $expect_file ssh $host $user $passwd "hostnamectl set-hostname $host"
-        info "scp /etc/hosts"
         expect $expect_file scp $host $user $passwd /etc/hosts
-        info "gen ssh key"
         expect $expect_file ssh $host $user $passwd "ssh-keygen -t rsa"
-        expect $expect_file ssh $host $user $passwd "cat $user_home/.ssh/id_rsa.pub > $user_home/.ssh/authorized_keys"
-        info "copy id to ctrl host"
-        echo "" > $user_home/.ssh/authorized_keys
-        expect $expect_file ssh $host $user $passwd "ssh-copy-id -i $user_home/.ssh/id_rsa.pub $user@$ctrl_host"
+        key=`expect $expect_file ssh $host $user $passwd "cat $user_home/.ssh/id_rsa.pub"`
+        echo $key | awk -F 'ssh-rsa' '{printf "ssh-rsa%s\n",$2}' >> $user_home/.ssh/authorized_keys
     done
     info "all hosts ssh key done"
     info "scp authorized_keys to all hosts"
     for host in ${hosts[*]}
     do
-        info "$host"
         expect $expect_file scp $host $user $passwd $user_home/.ssh/authorized_keys
     done
     info "scp authorized_keys done"
+    ssh $db_host date
+    need_ok "ssh failed"
     echo
 }
 
@@ -866,28 +868,28 @@ get_config ${CONFIG_NANME[CM_HOST]} cm_host
 get_config ${CONFIG_NANME[CM_INSTALL_PATH]} cm_install_path
 get_config ${CONFIG_NANME[CM_DB_PASSWD]} cm_db_passwd
 get_home $user
-if [ "$exec" == "init_ssh" ]
+if [ $exec == "init_ssh" ]
 then
     init_ssh
-elif [ "$exec" == "install_softs" ]
+elif [ $exec == "install_softs" ]
 then
     install_softs
-elif [ "$exec" == "init_sys" ]
+elif [ $exec == "init_sys" ]
 then
     init_system
-elif [[ "$exec" == "init_dev" ]]
+elif [[ $exec == "init_dev" ]]
 then
     init_devenv
-elif [[ "$exec" == "init_mysql" ]]
+elif [[ $exec == "init_mysql" ]]
 then    
     init_mysql
-elif [[ "$exec" == "test_sys" ]]
+elif [[ $exec == "test_sys" ]]
 then 
     test_system
-elif [[ "$exec" == "init_cm" ]]
+elif [[ $exec == "init_cm" ]]
 then
     init_cm
-elif [[ "$exec" == "all" ]]
+elif [[ $exec == "all" ]]
 then
     init_ssh
     install_softs
