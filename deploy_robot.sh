@@ -60,10 +60,6 @@ function need_ok {
     if [[ $? -ne 0 ]]; then err "$1"; fi
 }
 
-function need_ssh {
-
-}
-
 # 配置文件检查
 function need_config {
     if [ -z $1 ]
@@ -868,7 +864,7 @@ then
 elif [[ $exec == "init_cm" ]]
 then
     init_cm
-elif [[ $exec == "a;;" ]]
+elif [[ $exec == "all" ]]
     init_ssh
     install_softs
     init_system
