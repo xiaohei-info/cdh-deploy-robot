@@ -100,7 +100,6 @@ function init_config {
         key=${arr[0]}
         value=${arr[1]}
         config_map[$key]=$value
-        info "get config $key:$value"
     done
     info "config load finished"
 }
@@ -863,6 +862,7 @@ elif [[ $exec == "init_cm" ]]
 then
     init_cm
 elif [[ $exec == "all" ]]
+then
     init_ssh
     install_softs
     init_system
@@ -871,6 +871,7 @@ elif [[ $exec == "all" ]]
     test_system
     init_cm
 else
+    info "nothing todo, exit..."
     exit 0
 fi
 info "all done!!!"
