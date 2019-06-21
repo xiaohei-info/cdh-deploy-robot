@@ -8,18 +8,18 @@ fi
 
 # 定义配置项
 declare -A CONFIG_NANME=(
-    ["EXEC"]="exec"
-    ["CTRL_HOST"]="control.host"
-    ["USER"]="control.user"
-    ["PASSWD"]="control.passwd"
-    ["CONTRAST"]="contrast.host"
-    ["DB_HOST"]="mysql.host"
-    ["DB_DATA_DIR"]="mysql.data.dir"
-    ["DB_BINLOG_DIR"]="mysql.binlog.dir"
-    ["DB_ROOT_PASSWD"]="mysql.root.passwd"
-    ["CM_HOST"]="cm.host"
-    ["CM_INSTALL_PATH"]="cm.install.path"
-    ["CM_DB_PASSWD"]="cm.db.passwd"
+    ["EXEC"]="exec_type"
+    ["CTRL_HOST"]="control_host"
+    ["USER"]="control_user"
+    ["PASSWD"]="control_passwd"
+    ["CONTRAST"]="contrast_host"
+    ["DB_HOST"]="mysql_host"
+    ["DB_DATA_DIR"]="mysql_data_dir"
+    ["DB_BINLOG_DIR"]="mysql_binlog_dir"
+    ["DB_ROOT_PASSWD"]="mysql_root_passwd"
+    ["CM_HOST"]="cm_host"
+    ["CM_INSTALL_PATH"]="cm_install_path"
+    ["CM_DB_PASSWD"]="cm_db_passwd"
     )
 
 
@@ -31,7 +31,7 @@ function quit {
 }
 
 function say {
-    printf '\033[%sm %s: \n %s \033[0m\n' "$1" "$2" "$3"
+    printf '\033[%sm %s: %s \033[0m\n' "$1" "$2" "$3"
 }
 
 function err {
@@ -100,6 +100,7 @@ function init_config {
         key=${arr[0]}
         value=${arr[1]}
         config_map[$key]=$value
+        info "get config $key:$value"
     done
     info "config load finished"
 }
