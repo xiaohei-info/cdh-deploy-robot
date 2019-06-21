@@ -866,28 +866,28 @@ get_config ${CONFIG_NANME[CM_HOST]} cm_host
 get_config ${CONFIG_NANME[CM_INSTALL_PATH]} cm_install_path
 get_config ${CONFIG_NANME[CM_DB_PASSWD]} cm_db_passwd
 get_home $user
-if [ $exec == "init_ssh" ]
+if [ "$exec" == "init_ssh" ]
 then
     init_ssh
-elif [ $exec == "install_softs" ]
+elif [ "$exec" == "install_softs" ]
 then
     install_softs
-elif [ $exec == "init_sys" ]
+elif [ "$exec" == "init_sys" ]
 then
     init_system
-elif [[ $exec == "init_dev" ]]
+elif [[ "$exec" == "init_dev" ]]
 then
     init_devenv
-elif [[ $exec == "init_mysql" ]]
+elif [[ "$exec" == "init_mysql" ]]
 then    
     init_mysql
-elif [[ $exec == "test_sys" ]]
+elif [[ "$exec" == "test_sys" ]]
 then 
     test_system
-elif [[ $exec == "init_cm" ]]
+elif [[ "$exec" == "init_cm" ]]
 then
     init_cm
-elif [[ $exec == "all" ]]
+elif [[ "$exec" == "all" ]]
 then
     init_ssh
     install_softs
