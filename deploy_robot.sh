@@ -829,6 +829,7 @@ function init_cm {
 SELF=$(cd $(dirname $0) && pwd)
 cd $SELF
 tmp_path=/tmp
+test_result_file=$tmp_path/test_result.txt
 
 info "start deploy process"
 init_config $1
@@ -845,7 +846,6 @@ get_config ${CONFIG_NANME[DB_ROOT_PASSWD]} mysql_passwd
 get_config ${CONFIG_NANME[CM_HOST]} cm_host
 get_config ${CONFIG_NANME[CM_INSTALL_PATH]} cm_install_path
 get_config ${CONFIG_NANME[CM_DB_PASSWD]} cm_db_passwd
-test_result_file=$tmp_path/test_result.txt
 get_home $user
 if [ $exec == "init_ssh" ]
 then
@@ -868,7 +868,7 @@ then
 elif [[ $exec == "init_cm" ]]
 then
     init_cm
-else
+elif [[ $exec == "a;;" ]]
     init_ssh
     install_softs
     init_system
@@ -876,5 +876,7 @@ else
     init_mysql
     test_system
     init_cm
+else
+    exit 0
 fi
 info "all done!!!"
