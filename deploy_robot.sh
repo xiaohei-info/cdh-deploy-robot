@@ -207,7 +207,7 @@ function set_yum {
     info "start set yum"
     if [ ! -f /etc/yum.repos.d/CentOS-Base.repo.backup ]
     then
-        mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+        cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
     fi
     ansible all -a "yum install -y wget"
     ansible all -a "wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo"
