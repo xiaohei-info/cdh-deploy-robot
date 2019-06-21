@@ -6,9 +6,6 @@ then
     exit 1
 fi
 
-# 操作人只需在控制主机上操作
-set -x
-
 # 定义配置项
 declare -A CONFIG_NANME=(
     ["EXEC"]="exec"
