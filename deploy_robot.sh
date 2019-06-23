@@ -20,7 +20,6 @@ declare -A CONFIG_NANME=(
     ["CM_HOST"]="cm_host"
     ["CM_INSTALL_PATH"]="cm_install_path"
     ["CM_DB_PASSWD"]="cm_db_passwd"
-    ["INSTALL_PATH"]="install_path"
     )
 
 declare -A config_map=()
@@ -34,7 +33,7 @@ function quit {
 }
 
 function say {
-    printf '\033[%sm %s: %s \033[0m\n' "$1" "$2" "$3"
+    printf '\033[1;4;%sm %s: %s \033[0m\n' "$1" "$2" "$3"
 }
 
 function err {
@@ -43,7 +42,7 @@ function err {
 }
 
 function info {
-    say "32" "####[info]#### executive info" "$1" >&1
+    say "32" "####[info]#### process info" "$1" >&1
 }
 
 function check_cmd {
@@ -78,7 +77,7 @@ function need_config {
 function get_config {
     need_config $1
     eval $2=${config_map[$1]}
-    info "get config $1:${config_map[$1]}"
+    info "get config $1:${config_map[$1]}."
 }
 
 # 文件是否存在
@@ -93,7 +92,7 @@ function have {
 function init_config {
     info "config loading..."
     config_file=$1
-    info "get config_file $config_file"
+    info "get config_file $config_file."
     have $config_file
     config_arr=`cat $config_file | grep '='`
     for c in ${config_arr}
@@ -103,7 +102,7 @@ function init_config {
         value=${arr[1]}
         config_map[$key]=$value
     done
-    info "config load finished"
+    info "config load finished."
     echo 
 }
 
@@ -114,7 +113,7 @@ function get_home {
     else
         user_home="/home/$user"
     fi
-    info "operate user home : $user_home"
+    info "operate user home: $user_home"
     echo
 }
 
@@ -143,13 +142,13 @@ function init_hosts {
     #value
     ips=${hostip_map[@]} 
     info "ips: $ips"
-    info "hosts load finished"
+    info "hosts load finished."
     echo
 }
 
 function set_hosts {
     # 主机名设置
-    info "start setting /etc/hosts and config ssh keys"
+    info "start setting /etc/hosts and config ssh keys."
     yum install -y expect
     need_cmd expect
     expect_file=$SELF/expect.sh
@@ -166,7 +165,7 @@ function set_hosts {
     info "hosts added to /etc/hosts"
     curr_hosts=`cat /etc/hosts`
     info "current hosts: ${curr_hosts[*]}"
-    info "start config ssh key(all hosts)"
+    info "start config ssh key(all hosts)."
     for host in ${hosts[*]}
     do
         expect $expect_file ssh $host $user $passwd "rm -rf $user_home/.ssh"
@@ -176,21 +175,21 @@ function set_hosts {
         key=`expect $expect_file ssh $host $user $passwd "cat $user_home/.ssh/id_rsa.pub"`
         echo $key | awk -F 'ssh-rsa' '{printf "ssh-rsa%s\n",$2}' >> $user_home/.ssh/authorized_keys
     done
-    info "all hosts ssh key done"
-    info "scp authorized_keys to all hosts"
+    info "all hosts ssh key done."
+    info "scp authorized_keys to all hosts."
     for host in ${hosts[*]}
     do
         expect $expect_file scp $host $user $passwd $user_home/.ssh/authorized_keys
     done
-    info "scp authorized_keys done"
+    info "scp authorized_keys done."
     ssh $db_host date
-    need_ok "ssh failed"
+    need_ok "ssh failed."
     echo
 }
 
 function install_ansible {
     # 安装ansible
-    info "start install ansible"
+    info "start install ansible."
     yum install -y ansible
     need_cmd ansible
     echo "[all]" > /etc/ansible/hosts
@@ -198,13 +197,13 @@ function install_ansible {
     do
         echo $host >> /etc/ansible/hosts
     done
-    info "ansible finish config"
+    info "ansible finish config."
     echo
 }
 
 function set_yum {
     # 更新yum源
-    info "start set yum"
+    info "start set yum."
     if [ ! -f /etc/yum.repos.d/CentOS-Base.repo.backup ]
     then
         cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
@@ -213,91 +212,91 @@ function set_yum {
     ansible all -a "wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo"
     info "clean and makecache,it may take a little time, please wait a moment..."
     ansible all -m shell -a "yum clean all && yum makecache"
-    info "update yum, wait again"
+    info "update yum, wait again."
     ansible all -a "yum -y update"
 
     # 安装系统软件
-    info "install softs"
+    info "install softs."
     yum_requrements=`cat $SELF/yum_requirements.txt`
     echo "yum install -y $yum_requrements"
     ansible all -a "yum install -y $yum_requrements"
-    info "done"
+    info "done."
     echo
 }
 
 function set_selinux {
     # selinux
     selinux_stat=`getenforce | tr 'A-Z' 'a-z'`
-    info "setting selinux, current: $selinux_stat"
+    info "setting selinux, current: $selinux_stat."
     if [ $selinux_stat == "enforcing" ]
     then
-        info "change to disable"
+        info "change to disable..."
         sed -i 's/SELINUX=enforcing/SELINUX=disable/' /etc/selinux/config
         sed -i 's/SELINUX=Enforcing/SELINUX=disable/' /etc/selinux/config
         curr=`cat /etc/selinux/config | grep -v '#' | grep SELINUX=`
-        info "current: $curr"
+        info "current: $curr."
     fi
-    info "sync to hosts"
+    info "sync to hosts."
     ansible all -m copy -a "src=/etc/selinux/config dest=/etc/selinux/config"
-    info "done"
+    info "done."
     echo
 }
 
 #ipv6设置
 function set_ipv6 {
     ipv6_stat=`lsmod | grep ipv6`
-    info "setting ipv6 stat, current: $ipv6_stat"
+    info "setting ipv6 stat, current: $ipv6_stat."
     if [ -n "$ipv6_stat" ]
     then
-        info "change to disable"
+        info "change to disable..."
         original=`cat /etc/default/grub | grep GRUB_CMDLINE_LINUX | awk -F '="' '{print $2}'`
         result="GRUB_CMDLINE_LINUX=\"ipv6.disable=1 "$original
         cat /etc/default/grub | grep -v GRUB_CMDLINE_LINUX > /etc/default/grub
         echo $result >> /etc/default/grub
         curr=`cat /etc/default/grub | grep GRUB_CMDLINE_LINUX`
-        info "current: $curr"
-        info "sync to hosts"
+        info "current: $curr."
+        info "sync to hosts."
         ansible all -m copy -a "src=/etc/default/grub dest=/etc/default/grub"
     fi   
-    info "done"
+    info "done."
     echo
 }
 
 
 function set_firewall {
    # 防火墙设置
-    info "disable firewalld"
+    info "disable firewalld..."
     ansible all -a "systemctl status firewalld"
     ansible all -a "systemctl stop firewalld"
     ansible all -a "systemctl disable firewalld"
-    info "firewalld disabled"
+    info "firewalld disabled."
     echo
 }
 
 
 function set_dns {
     # dns服务器
-    info "add dns server"
+    info "add dns server."
     is_exists=`cat /etc/resolv.conf | grep 114 | wc -l`
     if [ $is_exists -eq 0 ]
     then
         echo "nameserver 114.114.114.114" >> /etc/resolv.conf
         echo "nameserver 8.8.8.8" >> /etc/resolv.conf 
     else
-        info "dns has been setup"
+        info "dns has been setup."
     fi
-    info "sync to hosts"
+    info "sync to hosts..."
     ansible all -m copy -a "src=/etc/resolv.conf dest=/etc/resolv.conf"
-    info "dns done"
+    info "dns done."
     echo
 }
 
 function set_ntp {
     # ntp配置
-    info "start ntp server"
-    info "change timezone info to Shanghai"
+    info "start ntp server..."
+    info "change timezone info to Shanghai."
     ansible all -m shell -a "rm -rf /etc/localtime && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime"
-    info "install ntpd"
+    info "install ntpd."
     ansible all -a "yum install ntp -y"
     info "sync time to 0.cn.pool.ntp.org"
     ansible all -a "ntpdate -u 0.cn.pool.ntp.org"
@@ -309,124 +308,136 @@ function set_ntp {
     fi
     ansible all -a "systemctl start ntpd"
     ansible all -a "systemctl enable ntpd"
-    info "ntp done"
+    info "ntp done."
     echo
 }
 
 function set_java {
     # java
-    info "start set java"
-    if [ ! check_cmd "java" ]
-    then
+    info "start set java..."
+    if ! check_cmd java; then
         java_file=`ls $install_path/oracle-j2sdk*.rpm`
+        if [ ! $? -eq 0 ]
+        then
+            err "cann't found any java file."
+        fi
         have $java_file
-        info "get jdk $java_file"
+        info "get jdk $java_file,scp to all hosts..."
         ansible all -m copy -a "src=$java_file dest=$java_file"
         ansible all -m shell -a "yum localinstall -y $java_file"
-        jdk_path=`ls /usr/java/jdk*`
-        info "jdk path: $jdk_path"
-        ansible all -m copy -a "rm -rf /usr/java/default && ln -s $jdk_path /usr/java/default"
+        jdk_name=`ls /usr/java*`
+        jdk_path="/usr/java/$jdk_name"
+        is_exists=`ls -al /usr/java* | grep jdk | wc -l`
+        if [ $is_exists -eq 1 ]
+        then
+            info "jdk path: $jdk_path"
+            ansible all -m shell -a "rm -rf /usr/java/default && ln -s $jdk_path /usr/java/default"
+        else
+            err "jdk_path $jdk_path error"
+        fi
     else
-        info "java already installed"
+        info "java already installed."
     fi
-    info "done"
+    info "done."
     echo
 }
 
 function set_scala {
     # scala
-    info "start set scala"
-    if [ ! check_cmd scala ]
-    then
+    info "start set scala..."
+    if ! check_cmd scala; then
         scala_file=`ls $install_path/scala*.tgz`
         have $scala_file
         info "get scala file $scala_file"
         ansible all -m shell -a "rm -rf /usr/scala && mkdir -p /usr/scala"
-        mv $scala_file /usr/scala
+        cp $scala_file /usr/scala
         scala_file=`ls /usr/scala/scala*.tgz`
+        have $scala_file
         ansible all -m copy -a "src=$scala_file dest=$scala_file"
-        ansible all -m shell -a "tar -zxvf $scala_file && rm -rf $scala_file"
+        ansible all -m shell -a "cd /usr/scala && tar -zxvf $scala_file && rm -rf $scala_file"
     else 
-        info "scala already installed"
+        info "scala already installed."
     fi
-    info "done"
+    info "done."
     echo
 }
 
 function set_profile {
     # 配置环境变量
-    scala_dir_name=`ls /usr/scala/scala*`
-    setting="JAVA_HOME=$jdk_path\nSCALA_HOME=$scala_dir_name\nCLASSPATH=\$JAVA_HOME/bin:\$SCALA_HOME/bin\nexport PATH=\$JAVA_HOME:\$SCALA_HOME:\$CLASSPATH:\$PATH\n"
-    info "profile setting: $setting"
+    info "start set profile."
+    scala_dir_name=`ls /usr/scala*`
+    scala_dir="/usr/scala/$scala_dir_name"
+    jdk_path="/usr/java/default"
+    info "java_home:$jdk_path, scala_home:$scala_dir"
+    setting="export JAVA_HOME=$jdk_path\nexport SCALA_HOME=$scala_dir\nexport CLASSPATH=\$JAVA_HOME/bin:\$SCALA_HOME/bin\nexport PATH=\$JAVA_HOME:\$SCALA_HOME:\$CLASSPATH:\$PATH\n"
     is_exists=`cat /etc/profile | grep JAVA_HOME | wc -l`
     if [ $is_exists -eq 0 ]
     then
         echo -e $setting >> /etc/profile
         ansible all -m copy -a "src=/etc/profile dest=/etc/profile"
-        ansible all -a "source /etc/profile"
+        ansible all -m shell -a "source /etc/profile"
     fi
-    info "done"
+    info "done."
     echo
 }
 
 function set_python {
-    info "start set python"
-    if [ ! check_cmd python3.6 ]
-    then
+    info "start set python..."
+    if ! check_cmd python3.6; then
         # python
-        info "install dev packages"
+        info "install dev packages, wait a moment..."
         ansible all -a "yum install -y openssl-devel bzip2-devel expat-devel gdbm-devel readline-devel sqlite-devel gcc-c++ python36-devel cyrus-sasl-lib.x86_64 cyrus-sasl-devel.x86_64 libgsasl-devel.x86_64 epel-release"
         # yum源下载
         ansible all -a "yum install https://centos7.iuscommunity.org/ius-release.rpm -y"
         # 安装python3.6
-        info "install python36"
+        info "install python36..."
         ansible all -a "yum install python36 -y"
     else
-        info "python36 already installed"
+        info "python36 already installed."
     fi
     
     # todo:check是否是easy_install-3.6
-    if [ ! check_cmd easy_install-3.6 ]
-    then
+    if ! check_cmd easy_install-3.6; then
         # 安装setuptools
-        info "install setuptools"
+        info "install setuptools, wait a moment..."
         ansible all -a "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/s/setuptools/setuptools-19.6.tar.gz#md5=c607dd118eae682c44ed146367a17e26"
-        ansible all -a "tar -zxvf $install_path/setuptools-19.6.tar.gz"
+        ansible all -m shell -a "cd $install_path && tar -zxvf setuptools-19.6.tar.gz"
         ansible all -m shell -a "cd $install_path/setuptools-19.6 && python3.6 setup.py build && python3.6 setup.py install"
     else
-        info "easy_install-3.6 already installed"
+        info "easy_install-3.6 already installed."
     fi
 
-    if [ ! check_cmd pip3.6 ]
-    then
+    if ! check_cmd pip3.6; then
         # 安装pip3.6
-        info "install pip"
+        info "install pip, wait a moment..."
         ansible all -a "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/p/pip/pip-8.0.2.tar.gz#md5=3a73c4188f8dbad6a1e6f6d44d117eeb"
-        ansible all -a "tar -zxvf $install_path/pip-8.0.2.tar.gz"
+        ansible all -m shell -a "cd $install_path && tar -zxvf pip-8.0.2.tar.gz"
         ansible all -m shell -a "cd $install_path/pip-8.0.2 && python3.6 setup.py build && python3.6 setup.py install"
     else
-        info "pip3.6 already installed"
+        info "pip3.6 already installed."
     fi
 
     # 修改pip源
-    info "change pip source"
+    info "change pip source."
     ansible all -m shell -a "rm -rf $user_home/.pip && mkdir $user_home/.pip"
     echo -e "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple" > $user_home/.pip/pip.conf
-    ansibe all -m copy -a "src=$user_home/.pip/pip.conf dest=$user_home/.pip/pip.conf"
-    ansible all -m shell -a "pip3.6 install --upgrade setuptools && easy_install-3.6 -U setuptools && pip3.6 install --upgrade pip"
+    ansible all -m copy -a "src=$user_home/.pip/pip.conf dest=$user_home/.pip/pip.conf"
+    ansible all -a "easy_install-3.6 -U setuptools"
+    ansible all -a "pip3.6 install --upgrade pip"
     # python依赖包安装
-    info "install requirements"
-    python_require_path=$SELF/py_requirements.txt
-    have $python_require_path
-    info "get requirements file: $python_require_path"
-    ansibe all -m copy -a "src=$python_require_path dest=$python_require_path"
-    ansible all -a "pip3.6 install -r $python_require_path"
-    info "done"
+    # info "install requirements"
+    # python_require_path=$SELF/py_requirements.txt
+    # have $python_require_path
+    # info "get requirements file: $python_require_path, install packages, wait a moment..."
+    # cp $python_require_path /tmp/py_requirements.txt
+    # ansible all -m copy -a "src=/tmp/py_requirements.txt dest=/tmp/py_requirements.txt"
+    # ansible all -a "pip3.6 install -r /tmp/py_requirements.txt"
+    info "done."
     echo
 }
 
 function set_tuned {
-    info "disable tuned"
+    info "disable tuned..."
     # 关闭tuned
     ansible all -a "systemctl start tuned"
     ansible all -a "systemctl status tuned"
@@ -436,12 +447,12 @@ function set_tuned {
     # 关闭tuned服务
     ansible all -a "systemctl stop tuned"
     ansible all -a "systemctl disable tuned"    
-    info "done"
+    info "done."
     echo
 }
 
 function set_hugepage {
-    info "disable hugepage"
+    info "disable hugepage..."
     # 关闭大页面
     # 输出[always] never意味着THP已启用，always [never]意味着THP未启用
     curr0=`cat /sys/kernel/mm/transparent_hugepage/enabled`
@@ -470,13 +481,13 @@ function set_hugepage {
         # 重新生成gurb.cfg文件
         ansible all -a "grub2-mkconfig -o /boot/grub2/grub.cfg"
     fi
-    info "done"
+    info "done."
     echo
 }
 
 function set_swappiness {
     # swappiness
-    info "set swappiness"
+    info "set swappiness..."
     swap_stat=`cat /proc/sys/vm/swappiness`
     info "current: $swap_stat"
     if [ ! $swap_stat -eq 1 ]
@@ -487,7 +498,7 @@ function set_swappiness {
         info "current: $curr"
         ansible all -m copy -a "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
     fi
-    info "done"
+    info "done."
     echo
 }
 
@@ -502,13 +513,13 @@ function set_tmout {
     else
         info "tmout already installed"
     fi
-    info "done"
+    info "done."
     echo
 }
 
 function set_kernel {
     # 内核优化
-    info "setting kernel"
+    info "setting kernel..."
     is_exists=`cat /etc/sysctl.conf | grep pid_max | wc -l`
     if [ $is_exists -eq 0 ]
     then
@@ -526,21 +537,21 @@ function set_kernel {
         \nnet.ipv4.tcp_max_orphans = 16384
         \nnet.ipv4.tcp_fin_timeout = 2
         \net.core.somaxconn=32768
-        \kernel.threads-max=196605
-        \kernel.pid_max=196605
-        \vm.max_map_count=393210"  >> /etc/sysctl.conf && echo 'yes'
+        \nkernel.threads-max=196605
+        \nkernel.pid_max=196605
+        \nvm.max_map_count=393210"  >> /etc/sysctl.conf && echo 'yes'
     else
-        info "kernel already installed"
+        info "kernel already installed."
     fi
     ansible all -m copy -a "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
-    info "done"
+    info "done."
     echo
 }
 
 function set_maxfiles {
     # 最大打开文件数
     curr=`ulimit -a`
-    info "current max files: $curr \n change to 196605"
+    info "current max files: $curr \n change to 196605..."
     is_exists=`cat /etc/security/limits.conf | grep 196605 | wc -l`
     if [ $is_exists -eq 0 ]
     then
@@ -549,10 +560,10 @@ function set_maxfiles {
         echo "* soft nproc 196605" >> /etc/security/limits.conf
         echo "* hard nproc 196605" >> /etc/security/limits.conf
     else
-        info "ulimit already installed"
+        info "ulimit already installed."
     fi
     ansible all -m copy -a "src=/etc/security/limits.conf dest=/etc/security/limits.conf"
-    info "done"
+    info "done."
     echo
 }
 
@@ -587,16 +598,23 @@ function get_sysinfo {
 
 function test_network {
     # 网络测试
-    info "start network test"
-    info "contrast host is: $contrast_host, start iperf server"
-    # todo: test
-    ssh $contrast_host "iperf3 -s -p 12345 -i 1" &
-    info "start iperf client"
+    info "start network test..."
+    info "contrast host is: $contrast_host, start iperf server."
+    nohup iperf3 -s -p 12345 -i 1 > /dev/null 2>&1 &
+    pid=`ps -ef | grep iperf3 | grep -v 'grep' | awk '{print $2}'`
+    if [ $? -eq 0 ]
+    then
+        info "iperf3 server pid: $pid"
+    else
+        err "iperf3 server start failed."
+    fi
+    info "start iperf client, please wait a moment..."
     echo "####network test####" > $test_result_file
-    iperf3 -c $contrast_host -p 12345 -i 1 -t 10 -w 100K >> $test_result_file
+    ssh $contrast_host "iperf3 -c $ctrl_host -p 12345 -i 1 -t 10 -w 100K" >> $test_result_file
     echo "" >> $test_result_file
     echo "" >> $test_result_file
-    info "test done,save result to $test_result_file"
+    info "test done,save result to $test_result_file killing iperf server, pid: $pid"
+    kill -9 $pid
     echo
 }
 
@@ -630,15 +648,17 @@ function test_io {
 
 function set_mysql {
     # mysql
-    info "start set mysql"
-    is_exists=`ssh $db_host "mysql" | grep -bash | wc -l`
-    if [ $is_exists -eq 1 ]
-    then
+    info "start set mysql..."
+    ssh $db_host "mysql"
+    if ! "$?" -eq 0 ; then
         info "mysql host: $db_host"
+        bundle_file=`ls $install_path/mysql*-bundle.tar`
+        have $bundle_file
+        cd $install_path && tar -xvf $bundle_file
         common_file=`ls $install_path/mysql-community-common-*.rpm`
-        libs_file=`ls $install_path/mysql-libs-common-*.rpm`
-        client_file=`ls $install_path/mysql-client-common-*.rpm`
-        server_file=`ls $install_path/mysql-server-common-*.rpm`
+        libs_file=`ls $install_path/mysql-community-libs-*.rpm | grep -v compat`
+        client_file=`ls $install_path/mysql-community-client-*.rpm`
+        server_file=`ls $install_path/mysql-community-server-*.rpm | grep -v minimal`
         driver_file=`ls $install_path/mysql-connector-java-*.tar.gz`
         # 默认为临时路径下
         have $common_file
@@ -646,17 +666,15 @@ function set_mysql {
         have $client_file
         have $server_file
         have $driver_file
-        info "get mysql install file: $common_file\n$libs_file\n$client_file\n$server_file\n$driver_file"
         
-        info "mkdir and scp to mysql host"
-        ssh $mysql_host "mkdir -p $install_path"
-        scp $install_path/mysql-community-common-$db_version.rpm $mysql_host:$install_path/mysql-community-common-$db_version.rpm
-        scp $install_path/mysql-community-libs-$db_version.rpm $mysql_host:$install_path/mysql-community-libs-$db_version.rpm
-        scp $install_path/mysql-community-client-$db_version.rpm $mysql_host:$install_path/mysql-community-client-$db_version.rpm
-        scp $install_path/mysql-community-server-$db_version.rpm $mysql_host:$install_path/mysql-community-server-$db_version.rpm
-        info "scp done"
+        info "mkdir and scp to mysql host."
+        scp $common_file $db_host:$common_file
+        scp $libs_file $db_host:$libs_file
+        scp $client_file $db_host:$client_file
+        scp $server_file $db_host:$server_file
+        info "scp done."
     
-        info "install mysql"
+        info "install mysql, wait a moment..."
         ssh $db_host <<EOF
         rpm -qa|grep -i mariadb
         rpm -e mariadb-libs-5.5.60-1.el7_5.x86_64 --nodeps
@@ -664,164 +682,194 @@ function set_mysql {
         rpm -ivh $libs_file
         rpm -ivh $client_file
         rpm -ivh $server_file
-        
         mkdir -p $db_data_dir
 EOF
     else 
-        info "mysql already installed"
+        info "mysql already installed."
     fi
 
-    info "create mysql config"
+    info "create mysql config."
     ssh $db_host "systemctl stop mysql"
     echo -e "
-    [mysqld]\n \
-    datadir=$db_data_dir\n \
-    socket=/var/lib/mysql/mysql.sock\n \
-    transaction-isolation = READ-COMMITTED\n \
-    symbolic-links = 0\n \
-    key_buffer_size = 32M\n \
-    max_allowed_packet = 32M\n \
-    thread_stack = 256K\n \
-    thread_cache_size = 64\n \
-    query_cache_limit = 8M\n \
-    query_cache_size = 64M\n \
-    query_cache_type = 1\n \
-    max_connections = 550\n \
-    #expire_logs_days = 10\n \
-    #max_binlog_size = 100M\n \
-    log_bin=$db_binlog_dir\n \
-    server_id=1\n \
-    binlog_format = mixed\n \
-    read_buffer_size = 2M\n \
-    read_rnd_buffer_size = 16M\n \
-    sort_buffer_size = 8M\n \
-    join_buffer_size = 8M\n \
-    innodb_file_per_table = 1\n \
-    innodb_flush_log_at_trx_commit  = 2\n \
-    innodb_log_buffer_size = 64M\n \
-    innodb_buffer_pool_size = 4G\n \
-    innodb_thread_concurrency = 8\n \
-    innodb_flush_method = O_DIRECT\n \
-    innodb_log_file_size = 512M\n \
-    [mysqld_safe]\n \
-    log-error=/var/log/mysqld.log\n \
-    pid-file=/var/run/mysqld/mysqld.pid\n \
-    sql_mode=STRICT_ALL_TABLES\n \
+[mysqld]\n\
+datadir=$db_data_dir\n\
+socket=/var/lib/mysql/mysql.sock\n\
+transaction-isolation = READ-COMMITTED\n\
+symbolic-links = 0\n\
+key_buffer_size = 32M\n\
+max_allowed_packet = 32M\n\
+thread_stack = 256K\n\
+thread_cache_size = 64\n\
+query_cache_limit = 8M\n\
+query_cache_size = 64M\n\
+query_cache_type = 1\n\
+max_connections = 550\n\
+#expire_logs_days = 10\n\
+#max_binlog_size = 100M\n\
+log_bin=$db_binlog_dir\n\
+server_id=1\n\
+binlog_format = mixed\n\
+read_buffer_size = 2M\n\
+read_rnd_buffer_size = 16M\n\
+sort_buffer_size = 8M\n\
+join_buffer_size = 8M\n\
+innodb_file_per_table = 1\n\
+innodb_flush_log_at_trx_commit  = 2\n\
+innodb_log_buffer_size = 64M\n\
+innodb_buffer_pool_size = 4G\n\
+innodb_thread_concurrency = 8\n\
+innodb_flush_method = O_DIRECT\n\
+innodb_log_file_size = 512M\n\
+[mysqld_safe]\n\
+log-error=/var/log/mysqld.log\n\
+pid-file=/var/run/mysqld/mysqld.pid\n\
+sql_mode=STRICT_ALL_TABLES\n\
+validate_password=OFF\
     " > /etc/my.conf
     info "get config mysql data dir: $db_data_dir"
     info "get config mysql binlog dir: $db_binlog_dir"
-    info "scp config file"
+    info "scp config file."
     scp /etc/my.conf $db_host:/etc/my.conf
-    info "install mysql driver"
+    info "change /etc/my.cnf permission to 666"
+    ssh $db_host "chmod 666 /etc/my.conf"
+    info "install mysql driver..."
     # 安装mysql驱动
     rm -rf $install_path/mysql-connector-java-*/*.jar
-    tar zxvf $driver_file
-    driver_jar=`ls $install_path/mysql-connector-java-*/*.jar`
-    info "get driver jar: $driver_jar,scp to hosts"
+    cd $install_path && tar -zxvf $driver_file
+    mv $install_path/mysql-connector-java-*/*.jar $install_path
+    driver_jar=`ls $install_path/mysql-connector-java-*.jar | grep -v bin`
+    info "get driver jar: $driver_jar,scp to hosts."
     ansible all -m copy -a "src=$driver_jar dest=$driver_jar"
-    ansible all -a "rm -rf /usr/share/java/ && mkdir -p /usr/share/java/ && mv $driver_jar /usr/share/java/"
+    ansible all -m shell -a "rm -rf /usr/share/java/ && mkdir -p /usr/share/java/ && cp $driver_jar /usr/share/java/mysql-connector-java.jar"
 
-    info "scp expect_file to mysql host"
+    info "scp expect_file to mysql host."
     # expect脚本复制
-    scp $expect_file $db_host:$expect_file
+    scp $SELF/expect.sh $db_host:/tmp
+    db_expect_file=/tmp/expect.sh
     info "get config mysql password: $mysql_passwd"
-    info "start mysql server and init db settings"
-    # 启动mysql
+    info "start mysql server and init db settings."
     ssh $db_host <<EOF
     systemctl start mysqld
     systemctl status mysqld
     systemctl enable mysqld
-    # todo: 判断是否可以二次执行
-    $expect_file mysql_init $db_host root $mysql_passwd mysql_init
-    # todo: 测试是否可以执行
-    mysql -u root -p$mysql_passwd <<INNER
-    drop database scm;
-    drop database amon;
-    drop database rman;
-    drop database hue;
-    drop database metastore;
-    drop database sentry;
-    drop database nav;
-    drop database navms;
-    drop database oozie;
-    CREATE DATABASE scm DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON scm.* TO 'scm'@'%' IDENTIFIED BY 'scm@DW';
-    CREATE DATABASE amon DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON amon.* TO 'amon'@'%' IDENTIFIED BY 'amon@DW';
-    CREATE DATABASE rman DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON rman.* TO 'rman'@'%' IDENTIFIED BY 'rman@DW';
-    CREATE DATABASE hue DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON hue.* TO 'hue'@'%' IDENTIFIED BY 'hue@DW';
-    CREATE DATABASE metastore DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON metastore.* TO 'hive'@'%' IDENTIFIED BY 'hive@DW';
-    CREATE DATABASE sentry DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON sentry.* TO 'sentry'@'%' IDENTIFIED BY 'sentry@DW';
-    CREATE DATABASE nav DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON nav.* TO 'nav'@'%' IDENTIFIED BY 'nav@DW';
-    CREATE DATABASE navms DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON navms.* TO 'navms'@'%' IDENTIFIED BY 'navms@DW';
-    CREATE DATABASE oozie DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-    GRANT ALL ON oozie.* TO 'oozie'@'%' IDENTIFIED BY 'oozie@DW';
-    SHOW DATABASES;
-    INNER
 EOF
-    info "done"
+    init_passwd=`ssh $db_host "cat /var/log/mysqld.log" | grep "temporary password" | awk -F ': ' '{print $NF}'`
+    info "mysql init password: $init_passwds"
+    info "set validate_password_policy to 0(normal 1)."
+    info "set validate_password_length to 1(normal 8)."
+    ssh $db_host <<EOF
+    mysql -u root -p"$init_passwd" --connect-expired-password -e "set global validate_password_policy=0;"
+    mysql -u root -p"$init_passwd" --connect-expired-password -e "set global validate_password_length=1;"
+    mysql -u root -p"$init_passwd" --connect-expired-password -e "select @@validate_password_policy;"
+    mysql -u root -p"$init_passwd" --connect-expired-password -e "select @@validate_password_length;"
+EOF
+    info "init mysql password by new password: $mysql_passwd"
+    ssh $db_host <<EOF
+    expect $db_expect_file mysql_init $db_host root "$init_passwd" "$mysql_passwd"
+EOF
+    # 启动mysql
+    ssh $db_host <<EOF
+    mysql -u root -p"$mysql_passwd" --connect-expired-password -e "set global validate_password_policy=0;"
+    mysql -u root -p"$mysql_passwd" --connect-expired-password -e "set global validate_password_length=1;"
+    mysql -u root -p"$mysql_passwd" --connect-expired-password -e "select @@validate_password_policy;"
+    mysql -u root -p"$mysql_passwd" --connect-expired-password -e "select @@validate_password_length;"
+    mysql -u root -p"$mysql_passwd" -e "drop database scm;"
+    mysql -u root -p"$mysql_passwd" -e "drop database amon;"
+    mysql -u root -p"$mysql_passwd" -e "drop database rman;"
+    mysql -u root -p"$mysql_passwd" -e "drop database hue;"
+    mysql -u root -p"$mysql_passwd" -e "drop database metastore;"
+    mysql -u root -p"$mysql_passwd" -e "drop database sentry;"
+    mysql -u root -p"$mysql_passwd" -e "drop database nav;"
+    mysql -u root -p"$mysql_passwd" -e "drop database navms;"
+    mysql -u root -p"$mysql_passwd" -e "drop database oozie;"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE scm DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON scm.* TO 'scm'@'%' IDENTIFIED BY 'scm@DW';"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE amon DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON amon.* TO 'amon'@'%' IDENTIFIED BY 'amon@DW';"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE rman DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON rman.* TO 'rman'@'%' IDENTIFIED BY 'rman@DW';"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE hue DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON hue.* TO 'hue'@'%' IDENTIFIED BY 'hue@DW';"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE metastore DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON metastore.* TO 'hive'@'%' IDENTIFIED BY 'hive@DW';"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE sentry DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON sentry.* TO 'sentry'@'%' IDENTIFIED BY 'sentry@DW';"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE nav DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON nav.* TO 'nav'@'%' IDENTIFIED BY 'nav@DW';"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE navms DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON navms.* TO 'navms'@'%' IDENTIFIED BY 'navms@DW';"
+    mysql -u root -p"$mysql_passwd" -e "CREATE DATABASE oozie DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+    mysql -u root -p"$mysql_passwd" -e "GRANT ALL ON oozie.* TO 'oozie'@'%' IDENTIFIED BY 'oozie@DW';"
+    mysql -u root -p"$mysql_passwd" -e "SHOW DATABASES;"
+EOF
+    info "done."
     echo
 }
 
 function set_cm {
     # 安装cm软件包
-    info "start set cloudera manager"
-    info "get config cm install path: $cm_install_path"
-    info "create sudoer and scp to hosts"
-    is_exists=`cat /etc/sudoers | grep cloudera-scm | wc -l`
-    if [ $is_exists -eq 0 ]
+    info "start set cloudera manager..."
+    # 是否已安装
+    is_exists=`systemctl status cloudera-scm-agent`
+    if [ ! -z "$is_exists" ]
     then
-        echo "cloudera-scm    ALL=(ALL)    NOPASSWD:ALL" >> /etc/sudoers
+        info "cm already installed."
+    else
+        info "get config cm install path: $cm_install_path"
+        info "create sudoer and scp to hosts."
+        is_exists=`cat /etc/sudoers | grep cloudera-scm | wc -l`
+        if [ "$is_exists" -eq 0 ]
+        then
+            echo "cloudera-scm    ALL=(ALL)    NOPASSWD:ALL" >> /etc/sudoers
+        fi
+        ansible all -m copy -a "src=/etc/sudoers dest=/etc/sudoers"
+        daemons_file=`ls $install_path/cloudera-manager-daemons-*.rpm`
+        agent_file=`ls $install_path/cloudera-manager-agent-*.rpm`
+        have $daemons_file
+        have $agent_file
+        info "get daemons file:$daemons_file"
+        info "get agent file:$agent_file"
+        info "scp and install daemons/agent to hosts, wait a moment..."
+        ansible all -m copy -a "src=$daemons_file dest=$daemons_file"
+        ansible all -m copy -a "src=$agent_file dest=$agent_file"
+        ansible all -a "rpm -ivh --force --nodeps $daemons_file"
+        ansible all -a "rpm -ivh --force --nodeps $agent_file"
+        info "daemons/agent installed."
+        # 主机节点安装所有包
+        info "install packages in ctrl host: $ctrl_host"
+        rpm -ivh --force --nodeps $install_path/cloudera-manager-server-*.rpm
     fi
-    ansible all -m copy -a "src=/etc/sudoers dest=/etc/sudoers"
-    daemons_file=`ls $install_path/cloudera-manager-daemons-*.rpm`
-    agent_file=`ls $install_path/cloudera-manager-agent-*.rpm`
-    have $daemons_file
-    have $agent_file
-    info "get daemons file:$daemons_file"
-    info "get agent file:$agent_file"
-    info "scp and install daemons/agent to hosts"
-    ansible all -m copy -a "src=$daemons_file dest=$daemons_file"
-    ansible all -m copy -a "src=$agent_file dest=$agent_file"
-    ansible all -a "rpm -ivh --force --nodeps $daemons_file"
-    ansible all -a "rpm -ivh --force --nodeps $agent_file"
-    info "daemons/agent installed"
-    # 主机节点安装所有包
-    info "install packages in ctrl host: $ctrl_host"
-    rpm -ivh --force --nodeps $install_path/cloudera-manager-server-*.rpm
     # 修改配置文件
     info "get config cm host: $cm_host"
     cat /etc/cloudera-scm-agent/config.ini | grep -v server_host > /etc/cloudera-scm-agent/config.ini
+    info "set cm host to config file."
     echo "server_host=$cm_host" >> /etc/cloudera-scm-agent/config.ini
-    info "set cm host to config file"
     # cdh
-    info "mv cdh parcels to cm install path"
+    info "mv cdh parcels to cm install path."
     rm -rf $cm_install_path && mkdir -p $cm_install_path
-    mv $install_path/CDH-*.parcel $cm_install_path
-    mv $install_path/manifest.json $cm_install_path
+    cp $install_path/CDH-*.parcel $cm_install_path
+    cp $install_path/manifest.json $cm_install_path
     # cm数据库配置
-    info "database config"
+    info "database config."
     echo -e "com.cloudera.cmf.db.type=mysql\ncom.cloudera.cmf.db.host=$db_host\ncom.cloudera.cmf.db.name=scm\ncom.cloudera.cmf.db.user=scm\ncom.cloudera.cmf.db.setupType=EXTERNAL\ncom.cloudera.cmf.db.password=$cm_db_passwd\n" > /etc/cloudera-scm-server/db.properties
     cat /etc/cloudera-scm-server/db.properties
-    info "init db"
+    info "init db..."
     # 初始化数据库
-    # todo: test 是否需要 expect
-    /opt/cloudera/cm/schema/scm_prepare_database.sh -h $db_host mysql scm scm
-    info "start cm server"
+    res=`expect $expect_file cm_init $db_host root "$cm_db_passwd" "$cm_db_passwd"`
+    is_succ=`echo $res | grep correctly | wc -l`
+    if [ ! "$is_succ" -eq 1 ]
+    then
+        err "cm db init failed."
+    fi
+    info "start cm server."
     # 启动server
-    systemctl start cloudera-scm-server
+    systemctl restart cloudera-scm-server
     # 查看日志
     # tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
-    info "start all cm agent"
+    info "start all cm agent."
     # 各个节点上启动agent
-    ansible all -a "systemctl start cloudera-scm-agent"
-    info "done"
+    ansible all -a "systemctl restart cloudera-scm-agent"
+    info "done."
     echo
 }
 
@@ -861,7 +909,6 @@ function init_mysql {
 function test_system {
     test_network
     test_io
-    get_sysinfo
     # 内存性能测试
     # 操作系统性能测试
 }
@@ -873,9 +920,10 @@ function init_cm {
 SELF=$(cd $(dirname $0) && pwd)
 cd $SELF
 tmp_path=/tmp
+install_path=$tmp_path
 test_result_file=$tmp_path/test_result.txt
 
-info "start deploy process"
+info "start deploy process."
 init_config $1
 # 控制主机与用户名、密码
 get_config ${CONFIG_NANME[EXEC]} exec
@@ -890,43 +938,36 @@ get_config ${CONFIG_NANME[DB_ROOT_PASSWD]} mysql_passwd
 get_config ${CONFIG_NANME[CM_HOST]} cm_host
 get_config ${CONFIG_NANME[CM_INSTALL_PATH]} cm_install_path
 get_config ${CONFIG_NANME[CM_DB_PASSWD]} cm_db_passwd
-get_config ${CONFIG_NANME[INSTALL_PATH]} install_path
 get_home $user
 init_hosts
+init_ssh
+install_softs
 
-# if [ $exec == "init_ssh" ]
-# then
-#     init_ssh
-# elif [ $exec == "install_softs" ]
-# then
-#     install_softs
-# elif [ $exec == "init_sys" ]
-# then
-#     init_system
-# elif [[ $exec == "init_dev" ]]
-# then
-#     init_devenv
-# elif [[ $exec == "init_mysql" ]]
-# then    
-#     init_mysql
-# elif [[ $exec == "test_sys" ]]
-# then 
-#     test_system
-# elif [[ $exec == "init_cm" ]]
-# then
-#     init_cm
-# elif [[ $exec == "all" ]]
-# then
-#     init_ssh
-#     install_softs
-#     init_system
-#     init_devenv
-#     init_mysql
-#     test_system
-#     init_cm
-# else
-#     info "nothing todo, exit..."
-#     exit 0
-# fi
-test_system
+if [ $exec == "init_sys" ]
+then
+    init_system
+elif [[ $exec == "init_dev" ]]
+then
+    init_devenv
+elif [[ $exec == "init_mysql" ]]
+then    
+    init_mysql
+elif [[ $exec == "test_sys" ]]
+then 
+    test_system
+elif [[ $exec == "init_cm" ]]
+then
+    init_cm
+elif [[ $exec == "all" ]]
+then
+    init_system
+    init_devenv
+    init_mysql
+    init_cm
+    test_system
+else
+    info "nothing todo, exit..."
+    exit 0
+fi
+get_sysinfo
 info "all done!!!"

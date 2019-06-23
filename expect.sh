@@ -5,6 +5,23 @@ if {$argc != 5} {
     exit 1
 }
 
+proc init_mysql_passwd {init_passwd new_passwd} {
+  expect {
+    "*Enter password for user root*" { send "$init_passwd\n"; exp_continue}
+    "*New password*" { send "$new_passwd\n" ; exp_continue}
+    "*Re-enter new password*" { send "$new_passwd\n"; exp_continue}
+    "*Do you wish to continue with the password provided*" { send "y\n"; exp_continue}
+    "*Change the password for root*" { send "y\n"; exp_continue}
+    "*Remove anonymous users*" { send "y\n"; exp_continue}
+    "*Disallow root login remotely*" { send "\n"; exp_continue}
+    "*Remove test database and access to it*" { send "y\n"; exp_continue}
+    "*Reload privilege tables now*" { send "y\n"; exp_continue}
+    "*Enter SCM password*" { send "$new_passwd\n"; exp_continue}
+    "*#" { return 0}
+  }
+  return 1
+}
+
 proc connect {passwd} {
    expect {
        "(yes/no)?" {
@@ -42,11 +59,6 @@ proc connect {passwd} {
                }
            }
        }
-       "enter for none" { send "\n"; exp_continue}
-       "Y/n" { send "Y\n" ; exp_continue}
-       "password:" { send "$passwd\n"; exp_continue}
-       "new password:" { send "$passwd\n"; exp_continue}
-       "Y/n" { send "Y\n" ; exp_continue}
    }
    return 1
 }
@@ -75,7 +87,12 @@ if {$exec == "ssh"} {
     }
 } elseif {$exec == "mysql_init"} {
     spawn /usr/bin/mysql_secure_installation
-    if {[connect $passwd]} {
+    if {[init_mysql_passwd $passwd $cmd]} {
+        exit 1
+    }
+} elseif {$exec == "cm_init" } {
+    spawn /opt/cloudera/cm/schema/scm_prepare_database.sh -h $host mysql scm scm
+    if {[init_mysql_passwd $passwd $cmd]} {
         exit 1
     }
 } else {
