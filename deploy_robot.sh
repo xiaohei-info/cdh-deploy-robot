@@ -554,7 +554,7 @@ function set_kernel {
         \net.core.somaxconn=32768
         \nkernel.threads-max=196605
         \nkernel.pid_max=196605
-        \nvm.max_map_count=393210"  >> /etc/sysctl.conf && echo 'yes'
+        \nvm.max_map_count=393210"  >> /etc/sysctl.conf
     else
         info "kernel already installed."
     fi
@@ -585,12 +585,18 @@ function set_maxfiles {
 function get_sysinfo {
     # 系统环境
     sys_version=`cat /etc/redhat-release`
-    info "umask: $umask_info"
     info "operator system version: $sys_version"
+    umask_info=`umask`
+    info "umask: $umask_info"
     java_version=`java -version`
     info "java version: $java_version"
+    info "java_home: $jdk_path"
     scala_version=`scala -version`
     info "scala version: $scala_version"
+    info "scala_home: $scala_dir"
+    info "mysql data dir: $db_data_dir"
+    info "mysql binlog dir: $db_binlog_dir"
+    info "cm install path: $cm_install_path"
     total_mem=`free -h | grep Mem | awk '{print $2}'`
     info "total memory: $total_mem"
         # 查看物理CPU个数
@@ -604,7 +610,6 @@ function get_sysinfo {
     info "logic cpu cores: $total_cpu"
     cpu_info=`cat /proc/cpuinfo`
     info "cpu info: \n$cpu_info"
-    umask_info=`umask`
     # fdisk -l
     # lsblk -d -o name,rota
     # df -TH   
