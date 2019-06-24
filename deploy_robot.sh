@@ -201,6 +201,21 @@ function install_ansible {
     echo
 }
 
+function ansible_command {
+    ansible all -a "$1"
+    need_ok "ansible command failed: $1"
+}
+
+function ansible_shell {
+    ansible all -m shell -a "$1"
+    need_ok "ansible shell failed: $1"
+}
+
+function ansible_copy {
+    ansible all -m copy -a "$1"
+    need_ok "ansible copy failed: $1"
+}
+
 function set_yum {
     # 更新yum源
     info "start set yum."
@@ -208,18 +223,18 @@ function set_yum {
     then
         cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
     fi
-    ansible all -a "yum install -y wget"
-    ansible all -a "wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo"
+    ansible_command "yum install -y wget"
+    ansible_command "wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo"
     info "clean and makecache,it may take a little time, please wait a moment..."
-    ansible all -m shell -a "yum clean all && yum makecache"
+    ansible_shell "yum clean all && yum makecache"
     info "update yum, wait again."
-    ansible all -a "yum -y update"
+    ansible_command "yum -y update"
 
     # 安装系统软件
     info "install softs."
     yum_requrements=`cat $SELF/yum_requirements.txt`
     echo "yum install -y $yum_requrements"
-    ansible all -a "yum install -y $yum_requrements"
+    ansible_command "yum install -y $yum_requrements"
     info "done."
     echo
 }
@@ -237,7 +252,7 @@ function set_selinux {
         info "current: $curr."
     fi
     info "sync to hosts."
-    ansible all -m copy -a "src=/etc/selinux/config dest=/etc/selinux/config"
+    ansible_copy "src=/etc/selinux/config dest=/etc/selinux/config"
     info "done."
     echo
 }
@@ -256,7 +271,7 @@ function set_ipv6 {
         curr=`cat /etc/default/grub | grep GRUB_CMDLINE_LINUX`
         info "current: $curr."
         info "sync to hosts."
-        ansible all -m copy -a "src=/etc/default/grub dest=/etc/default/grub"
+        ansible_copy "src=/etc/default/grub dest=/etc/default/grub"
     fi   
     info "done."
     echo
@@ -266,9 +281,9 @@ function set_ipv6 {
 function set_firewall {
    # 防火墙设置
     info "disable firewalld..."
-    ansible all -a "systemctl status firewalld"
-    ansible all -a "systemctl stop firewalld"
-    ansible all -a "systemctl disable firewalld"
+    ansible_command "systemctl status firewalld"
+    ansible_command "systemctl stop firewalld"
+    ansible_command "systemctl disable firewalld"
     info "firewalld disabled."
     echo
 }
@@ -286,7 +301,7 @@ function set_dns {
         info "dns has been setup."
     fi
     info "sync to hosts..."
-    ansible all -m copy -a "src=/etc/resolv.conf dest=/etc/resolv.conf"
+    ansible_copy "src=/etc/resolv.conf dest=/etc/resolv.conf"
     info "dns done."
     echo
 }
@@ -295,19 +310,19 @@ function set_ntp {
     # ntp配置
     info "start ntp server..."
     info "change timezone info to Shanghai."
-    ansible all -m shell -a "rm -rf /etc/localtime && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime"
+    ansible_shell -a "rm -rf /etc/localtime && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime"
     info "install ntpd."
-    ansible all -a "yum install ntp -y"
+    ansible_command "yum install ntp -y"
     info "sync time to 0.cn.pool.ntp.org"
-    ansible all -a "ntpdate -u 0.cn.pool.ntp.org"
+    ansible_command "ntpdate -u 0.cn.pool.ntp.org"
     info "add ntp1.aliyun.com to ntp.conf"
     is_exists=`cat /etc/ntp.conf | grep aliyun | wc -l`
     if [ $is_exists -eq 0 ]
     then
         echo "server ntp1.aliyun.com" >> /etc/ntp.conf
     fi
-    ansible all -a "systemctl start ntpd"
-    ansible all -a "systemctl enable ntpd"
+    ansible_command "systemctl start ntpd"
+    ansible_command "systemctl enable ntpd"
     info "ntp done."
     echo
 }
@@ -323,15 +338,15 @@ function set_java {
         fi
         have $java_file
         info "get jdk $java_file,scp to all hosts..."
-        ansible all -m copy -a "src=$java_file dest=$java_file"
-        ansible all -m shell -a "yum localinstall -y $java_file"
+        ansible_copy "src=$java_file dest=$java_file"
+        ansible_shell "yum localinstall -y $java_file"
         jdk_name=`ls /usr/java*`
         jdk_path="/usr/java/$jdk_name"
         is_exists=`ls -al /usr/java* | grep jdk | wc -l`
         if [ $is_exists -eq 1 ]
         then
             info "jdk path: $jdk_path"
-            ansible all -m shell -a "rm -rf /usr/java/default && ln -s $jdk_path /usr/java/default"
+            ansible_shell "rm -rf /usr/java/default && ln -s $jdk_path /usr/java/default"
         else
             err "jdk_path $jdk_path error"
         fi
@@ -349,12 +364,12 @@ function set_scala {
         scala_file=`ls $install_path/scala*.tgz`
         have $scala_file
         info "get scala file $scala_file"
-        ansible all -m shell -a "rm -rf /usr/scala && mkdir -p /usr/scala"
+        ansible_shell "rm -rf /usr/scala && mkdir -p /usr/scala"
         cp $scala_file /usr/scala
         scala_file=`ls /usr/scala/scala*.tgz`
         have $scala_file
-        ansible all -m copy -a "src=$scala_file dest=$scala_file"
-        ansible all -m shell -a "cd /usr/scala && tar -zxvf $scala_file && rm -rf $scala_file"
+        ansible_copy "src=$scala_file dest=$scala_file"
+        ansible_shell "cd /usr/scala && tar -zxvf $scala_file && rm -rf $scala_file"
     else 
         info "scala already installed."
     fi
@@ -374,8 +389,8 @@ function set_profile {
     if [ $is_exists -eq 0 ]
     then
         echo -e $setting >> /etc/profile
-        ansible all -m copy -a "src=/etc/profile dest=/etc/profile"
-        ansible all -m shell -a "source /etc/profile"
+        ansible_copy "src=/etc/profile dest=/etc/profile"
+        ansible_shell "source /etc/profile"
     fi
     info "done."
     echo
@@ -386,12 +401,12 @@ function set_python {
     if ! check_cmd python3.6; then
         # python
         info "install dev packages, wait a moment..."
-        ansible all -a "yum install -y openssl-devel bzip2-devel expat-devel gdbm-devel readline-devel sqlite-devel gcc-c++ python36-devel cyrus-sasl-lib.x86_64 cyrus-sasl-devel.x86_64 libgsasl-devel.x86_64 epel-release"
+        ansible_command "yum install -y openssl-devel bzip2-devel expat-devel gdbm-devel readline-devel sqlite-devel gcc-c++ python36-devel cyrus-sasl-lib.x86_64 cyrus-sasl-devel.x86_64 libgsasl-devel.x86_64 epel-release"
         # yum源下载
-        ansible all -a "yum install https://centos7.iuscommunity.org/ius-release.rpm -y"
+        ansible_command "yum install https://centos7.iuscommunity.org/ius-release.rpm -y"
         # 安装python3.6
         info "install python36..."
-        ansible all -a "yum install python36 -y"
+        ansible_command "yum install python36 -y"
     else
         info "python36 already installed."
     fi
@@ -400,9 +415,9 @@ function set_python {
     if ! check_cmd easy_install-3.6; then
         # 安装setuptools
         info "install setuptools, wait a moment..."
-        ansible all -a "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/s/setuptools/setuptools-19.6.tar.gz#md5=c607dd118eae682c44ed146367a17e26"
-        ansible all -m shell -a "cd $install_path && tar -zxvf setuptools-19.6.tar.gz"
-        ansible all -m shell -a "cd $install_path/setuptools-19.6 && python3.6 setup.py build && python3.6 setup.py install"
+        ansible_command "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/s/setuptools/setuptools-19.6.tar.gz#md5=c607dd118eae682c44ed146367a17e26"
+        ansible_shell "cd $install_path && tar -zxvf setuptools-19.6.tar.gz"
+        ansible_shell "cd $install_path/setuptools-19.6 && python3.6 setup.py build && python3.6 setup.py install"
     else
         info "easy_install-3.6 already installed."
     fi
@@ -410,28 +425,28 @@ function set_python {
     if ! check_cmd pip3.6; then
         # 安装pip3.6
         info "install pip, wait a moment..."
-        ansible all -a "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/p/pip/pip-8.0.2.tar.gz#md5=3a73c4188f8dbad6a1e6f6d44d117eeb"
-        ansible all -m shell -a "cd $install_path && tar -zxvf pip-8.0.2.tar.gz"
-        ansible all -m shell -a "cd $install_path/pip-8.0.2 && python3.6 setup.py build && python3.6 setup.py install"
+        ansible_command "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/p/pip/pip-8.0.2.tar.gz#md5=3a73c4188f8dbad6a1e6f6d44d117eeb"
+        ansible_shell "cd $install_path && tar -zxvf pip-8.0.2.tar.gz"
+        ansible_shell "cd $install_path/pip-8.0.2 && python3.6 setup.py build && python3.6 setup.py install"
     else
         info "pip3.6 already installed."
     fi
 
     # 修改pip源
     info "change pip source."
-    ansible all -m shell -a "rm -rf $user_home/.pip && mkdir $user_home/.pip"
+    ansible_shell "rm -rf $user_home/.pip && mkdir $user_home/.pip"
     echo -e "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple" > $user_home/.pip/pip.conf
-    ansible all -m copy -a "src=$user_home/.pip/pip.conf dest=$user_home/.pip/pip.conf"
-    ansible all -a "easy_install-3.6 -U setuptools"
-    ansible all -a "pip3.6 install --upgrade pip"
+    ansible_copy "src=$user_home/.pip/pip.conf dest=$user_home/.pip/pip.conf"
+    ansible_command "easy_install-3.6 -U setuptools"
+    ansible_command "pip3.6 install --upgrade pip"
     # python依赖包安装
     # info "install requirements"
     # python_require_path=$SELF/py_requirements.txt
     # have $python_require_path
     # info "get requirements file: $python_require_path, install packages, wait a moment..."
     # cp $python_require_path /tmp/py_requirements.txt
-    # ansible all -m copy -a "src=/tmp/py_requirements.txt dest=/tmp/py_requirements.txt"
-    # ansible all -a "pip3.6 install -r /tmp/py_requirements.txt"
+    # ansible_copy "src=/tmp/py_requirements.txt dest=/tmp/py_requirements.txt"
+    # ansible_command "pip3.6 install -r /tmp/py_requirements.txt"
     info "done."
     echo
 }
@@ -439,14 +454,14 @@ function set_python {
 function set_tuned {
     info "disable tuned..."
     # 关闭tuned
-    ansible all -a "systemctl start tuned"
-    ansible all -a "systemctl status tuned"
+    ansible_command "systemctl start tuned"
+    ansible_command "systemctl status tuned"
     # 显示No current active profile
-    ansible all -a "tuned-adm off"
-    ansible all -a "tuned-adm list"
+    ansible_command "tuned-adm off"
+    ansible_command "tuned-adm list"
     # 关闭tuned服务
-    ansible all -a "systemctl stop tuned"
-    ansible all -a "systemctl disable tuned"    
+    ansible_command "systemctl stop tuned"
+    ansible_command "systemctl disable tuned"    
     info "done."
     echo
 }
@@ -463,13 +478,13 @@ function set_hugepage {
     if [ $is_enable -eq 1 ]
     then
         # 关闭
-        ansible all -m shell -a "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
-        ansible all -m shell -a "echo never > /sys/kernel/mm/transparent_hugepage/defrag"
+        ansible_shell "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
+        ansible_shell "echo never > /sys/kernel/mm/transparent_hugepage/defrag"
         # 设置开机关闭
         echo "echo never > /sys/kernel/mm/transparent_hugepage/defrag" >> /etc/rc.local
         echo "echo never > /sys/kernel/mm/transparent_hugepage/enabled" >> /etc/rc.local
         chmod +x /etc/rc.d/rc.local
-        ansible all -m copy -a "src=/etc/rc.d/rc.local dest=/etc/rc.d/rc.local"
+        ansible_copy "src=/etc/rc.d/rc.local dest=/etc/rc.d/rc.local"
         # 在GRUB_CMDLINE_LINUX项目后面添加一个参数：transparent_hugepage=never
         original=`cat /etc/default/grub | grep GRUB_CMDLINE_LINUX | awk -F '="' '{print $2}'`
         result="GRUB_CMDLINE_LINUX=\"transparent_hugepage=never "$original
@@ -477,9 +492,9 @@ function set_hugepage {
         echo $result >> /etc/default/grub
         curr2=`cat /etc/default/grub | grep GRUB_CMDLINE_LINUX`
         info "current: $curr2"
-        ansible all -m copy -a "src=/etc/default/grub dest=/etc/default/grub"
+        ansible_copy "src=/etc/default/grub dest=/etc/default/grub"
         # 重新生成gurb.cfg文件
-        ansible all -a "grub2-mkconfig -o /boot/grub2/grub.cfg"
+        ansible_command "grub2-mkconfig -o /boot/grub2/grub.cfg"
     fi
     info "done."
     echo
@@ -492,11 +507,11 @@ function set_swappiness {
     info "current: $swap_stat"
     if [ ! $swap_stat -eq 1 ]
     then
-        ansible all -a "sysctl -w vm.swappiness=1"
+        ansible_command "sysctl -w vm.swappiness=1"
         echo "vm.swappiness=1" >> /etc/sysctl.conf
         curr=`cat /etc/sysctl.conf | grep swappiness`
         info "current: $curr"
-        ansible all -m copy -a "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
+        ansible_copy "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
     fi
     info "done."
     echo
@@ -509,7 +524,7 @@ function set_tmout {
     if [ $is_exists -eq 0 ]
     then
         echo "TMOUT=900" >> /etc/profile
-        ansible all -m copy -a "src=/etc/profile dest=/etc/profile"
+        ansible_copy "src=/etc/profile dest=/etc/profile"
     else
         info "tmout already installed"
     fi
@@ -543,7 +558,7 @@ function set_kernel {
     else
         info "kernel already installed."
     fi
-    ansible all -m copy -a "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
+    ansible_copy "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
     info "done."
     echo
 }
@@ -562,7 +577,7 @@ function set_maxfiles {
     else
         info "ulimit already installed."
     fi
-    ansible all -m copy -a "src=/etc/security/limits.conf dest=/etc/security/limits.conf"
+    ansible_copy "src=/etc/security/limits.conf dest=/etc/security/limits.conf"
     info "done."
     echo
 }
@@ -739,8 +754,8 @@ validate_password=OFF\
     mv $install_path/mysql-connector-java-*/*.jar $install_path
     driver_jar=`ls $install_path/mysql-connector-java-*.jar | grep -v bin`
     info "get driver jar: $driver_jar,scp to hosts."
-    ansible all -m copy -a "src=$driver_jar dest=$driver_jar"
-    ansible all -m shell -a "rm -rf /usr/share/java/ && mkdir -p /usr/share/java/ && cp $driver_jar /usr/share/java/mysql-connector-java.jar"
+    ansible_copy "src=$driver_jar dest=$driver_jar"
+    ansible_shell "rm -rf /usr/share/java/ && mkdir -p /usr/share/java/ && cp $driver_jar /usr/share/java/mysql-connector-java.jar"
 
     info "scp expect_file to mysql host."
     # expect脚本复制
@@ -822,7 +837,7 @@ function set_cm {
         then
             echo "cloudera-scm    ALL=(ALL)    NOPASSWD:ALL" >> /etc/sudoers
         fi
-        ansible all -m copy -a "src=/etc/sudoers dest=/etc/sudoers"
+        ansible_copy "src=/etc/sudoers dest=/etc/sudoers"
         daemons_file=`ls $install_path/cloudera-manager-daemons-*.rpm`
         agent_file=`ls $install_path/cloudera-manager-agent-*.rpm`
         have $daemons_file
@@ -830,10 +845,10 @@ function set_cm {
         info "get daemons file:$daemons_file"
         info "get agent file:$agent_file"
         info "scp and install daemons/agent to hosts, wait a moment..."
-        ansible all -m copy -a "src=$daemons_file dest=$daemons_file"
-        ansible all -m copy -a "src=$agent_file dest=$agent_file"
-        ansible all -a "rpm -ivh --force --nodeps $daemons_file"
-        ansible all -a "rpm -ivh --force --nodeps $agent_file"
+        ansible_copy "src=$daemons_file dest=$daemons_file"
+        ansible_copy "src=$agent_file dest=$agent_file"
+        ansible_command "rpm -ivh --force --nodeps $daemons_file"
+        ansible_command "rpm -ivh --force --nodeps $agent_file"
         info "daemons/agent installed."
         # 主机节点安装所有包
         info "install packages in ctrl host: $ctrl_host"
@@ -868,7 +883,7 @@ function set_cm {
     # tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
     info "start all cm agent."
     # 各个节点上启动agent
-    ansible all -a "systemctl restart cloudera-scm-agent"
+    ansible_command "systemctl restart cloudera-scm-agent"
     info "done."
     echo
 }
