@@ -59,6 +59,11 @@ function need_ok {
     if [[ $? -ne 0 ]]; then err "$1"; fi
 }
 
+function have_fun {
+    fun=`cat $SELF/have_fun`
+    printf '\033[1;32m %s \033[0m\n\n' "$fun"
+}
+
 # 配置文件检查
 function need_config {
     if [ -z $1 ]
@@ -990,4 +995,5 @@ else
     exit 0
 fi
 get_sysinfo
+have_fun
 info "all done!!!"
