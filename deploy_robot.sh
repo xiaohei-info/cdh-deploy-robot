@@ -868,10 +868,9 @@ function set_cm {
         info "get config cm host: $cm_host"
         cat /etc/cloudera-scm-agent/config.ini | grep -v server_host > /etc/cloudera-scm-agent/config.ini.tmp
         info "set cm host to config file."
-        echo "server_host=$cm_host" >> /etc/cloudera-scm-agent/config.ini.tmp
-        mv /etc/cloudera-scm-agent/config.ini /etc/cloudera-scm-agent/config.ini.bak
-        mv /etc/cloudera-scm-agent/config.ini.tmp /etc/cloudera-scm-agent/config.ini
-        ansible_copy "src=/etc/cloudera-scm-agent/config.ini desst=/etc/cloudera-scm-agent/config.ini"
+        cp /etc/cloudera-scm-agent/config.ini /etc/cloudera-scm-agent/config.ini.bak
+        sed -i "s/server_host=localhost/server_host=$cm_host/" /etc/cloudera-scm-agent/config.ini
+        ansible_copy "src=/etc/cloudera-scm-agent/config.ini dest=/etc/cloudera-scm-agent/config.ini"
 
         # cdh
         info "mv cdh parcels to cm install path."
