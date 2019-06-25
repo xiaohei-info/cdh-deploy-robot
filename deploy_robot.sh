@@ -1,8 +1,9 @@
 #!/bin/bash
 #
-if [ $# -lt 1 ]
+if [ $# -lt 2 ]
 then
-    echo "Usage: [config file]"
+    # init_sys/init_dev/init_mysql/init_cm/test_sys/install_all/init_config/test_cdh
+    echo "Usage: <config file> <type>"
     exit 1
 fi
 
@@ -634,11 +635,11 @@ function test_network {
         err "iperf3 server start failed."
     fi
     info "start iperf client, please wait a moment..."
-    echo "####network test####" > $test_result_file
-    ssh $contrast_host "iperf3 -c $ctrl_host -p 12345 -i 1 -t 10 -w 100K" >> $test_result_file
-    echo "" >> $test_result_file
-    echo "" >> $test_result_file
-    info "test done,save result to $test_result_file killing iperf server, pid: $pid"
+    echo "####network test####" > $test_sys_file
+    ssh $contrast_host "iperf3 -c $ctrl_host -p 12345 -i 1 -t 10 -w 100K" >> $test_sys_file
+    echo "" >> $test_sys_file
+    echo "" >> $test_sys_file
+    info "test done,save result to $test_sys_file killing iperf server, pid: $pid"
     kill -9 $pid
     echo
 }
@@ -647,27 +648,27 @@ function test_io {
     info "start io test,please wait a moment..."
     # io测试
     # 随机读
-    echo "####io test####" >> $test_result_file
-    echo "====random read====" >> $test_result_file
-    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=randread -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -allow_mounted_write=1 >> $test_result_file
-    echo "" >> $test_result_file 
+    echo "####io test####" >> $test_sys_file
+    echo "====random read====" >> $test_sys_file
+    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=randread -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -allow_mounted_write=1 >> $test_sys_file
+    echo "" >> $test_sys_file 
     # 顺序读
-    echo "====sequence read====" >> $test_result_file
-    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=read -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -allow_mounted_write=1 >> $test_result_file
-    echo "" >> $test_result_file
+    echo "====sequence read====" >> $test_sys_file
+    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=read -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -allow_mounted_write=1 >> $test_sys_file
+    echo "" >> $test_sys_file
     # 随机写
-    echo "====random write====" >> $test_result_file
-    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=randwrite -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -allow_mounted_write=1 >> $test_result_file
-    echo "" >> $test_result_file
+    echo "====random write====" >> $test_sys_file
+    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=randwrite -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -allow_mounted_write=1 >> $test_sys_file
+    echo "" >> $test_sys_file
     # 顺序写
-    echo "====sequence write====" >> $test_result_file
-    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=write -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -allow_mounted_write=1 >> $test_result_file
-    echo "" >> $test_result_file
+    echo "====sequence write====" >> $test_sys_file
+    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=write -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -allow_mounted_write=1 >> $test_sys_file
+    echo "" >> $test_sys_file
     # 混合随机读写
-    echo "====mix raddom read/write====" >> $test_result_file
-    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=randrw -rwmixread=30 -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -ioscheduler=noop -allow_mounted_write=1 >> $test_result_file
-    echo "" >> $test_result_file
-    info "test done,save result to $test_result_file"
+    echo "====mix raddom read/write====" >> $test_sys_file
+    fio -filename=/dev/sda -direct=1 -iodepth 1 -thread -rw=randrw -rwmixread=30 -ioengine=psync -bs=4k -size=60G -numjobs=64 -runtime=10 -group_reporting -name=file -ioscheduler=noop -allow_mounted_write=1 >> $test_sys_file
+    echo "" >> $test_sys_file
+    info "test done,save result to $test_sys_file"
     echo
 }
 
@@ -942,11 +943,23 @@ function init_cm {
     set_cm
 }
 
+function init_cdh_config {
+    script=$SELF/deploy_config.sh
+    have $script
+    sh $script $config_cdh_file all
+}
+
+function test_cdh {
+
+}
+
 SELF=$(cd $(dirname $0) && pwd)
 cd $SELF
 tmp_path=/tmp
 install_path=$tmp_path
-test_result_file=$tmp_path/test_result.txt
+test_sys_file=$SELF/test_sys.log
+test_cdh_file=$SELF/test_cdh.log
+config_cdh_file=$SELF/cdh_config.log
 
 info "start deploy process."
 init_config $1
@@ -968,6 +981,7 @@ init_hosts
 init_ssh
 install_softs
 
+exec=$2
 if [ $exec == "init_sys" ]
 then
     init_system
@@ -983,15 +997,21 @@ then
 elif [[ $exec == "init_cm" ]]
 then
     init_cm
-elif [[ $exec == "all" ]]
+elif [[ $exec == "install_all" ]]
 then
     init_system
     init_devenv
     init_mysql
     init_cm
     test_system
+elif [[ $exec == "init_config" ]]
+then
+    init_cdh_config
+elif [[ $exec == "test_cdh" ]]
+then
+    test_cdh
 else
-    info "nothing todo, exit..."
+    info "nothing todo,  exit... \n try to use init_sys/init_dev/init_mysql/init_cm/test_sys/install_all/init_config/test_cdh ?"
     exit 0
 fi
 get_sysinfo

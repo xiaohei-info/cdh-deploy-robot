@@ -1,5 +1,3 @@
-# init_sys/init_dev/init_mysql/init_cm/test_sys/all
-exec_type=all
 # 控制主机-执行脚本的机器
 control_host=cdh2-1
 # 控制主机用户名

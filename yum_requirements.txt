@@ -1,4 +1,5 @@
 expect
+bc
 net-tools
 iotop
 zip
