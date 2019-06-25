@@ -452,6 +452,7 @@ else
     info "nothing todo, exit... \n try to use hdfs/hbase/yarn/spark/kafka/hue/all ?"
 fi
 
+info "configuration save to $config_result_file"
 info "all done!!!"
 
 

@@ -258,7 +258,7 @@ function set_selinux {
         info "current: $curr."
     fi
     info "sync to hosts."
-    ansible_copy "src=/etc/selinux/config dest=/etc/selinux/config"
+    ansible all -m copy -a "src=/etc/selinux/config dest=/etc/selinux/config"
     info "done."
     echo
 }
@@ -277,7 +277,7 @@ function set_ipv6 {
         curr=`cat /etc/default/grub | grep GRUB_CMDLINE_LINUX`
         info "current: $curr."
         info "sync to hosts."
-        ansible_copy "src=/etc/default/grub dest=/etc/default/grub"
+        ansible all -m copy -a "src=/etc/default/grub dest=/etc/default/grub"
     fi   
     info "done."
     echo
@@ -287,9 +287,9 @@ function set_ipv6 {
 function set_firewall {
    # 防火墙设置
     info "disable firewalld..."
-    ansible_command "systemctl status firewalld"
-    ansible_command "systemctl stop firewalld"
-    ansible_command "systemctl disable firewalld"
+    ansible all -a "systemctl status firewalld"
+    ansible all -a "systemctl stop firewalld"
+    ansible all -a "systemctl disable firewalld"
     info "firewalld disabled."
     echo
 }
@@ -316,19 +316,19 @@ function set_ntp {
     # ntp配置
     info "start ntp server..."
     info "change timezone info to Shanghai."
-    ansible_shell -a "rm -rf /etc/localtime && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime"
+    ansible all -m shell -a "rm -rf /etc/localtime && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime"
     info "install ntpd."
-    ansible_command "yum install ntp -y"
+    ansible all -a "yum install ntp -y"
     info "sync time to 0.cn.pool.ntp.org"
-    ansible_command "ntpdate -u 0.cn.pool.ntp.org"
+    ansible all -a "ntpdate -u 0.cn.pool.ntp.org"
     info "add ntp1.aliyun.com to ntp.conf"
     is_exists=`cat /etc/ntp.conf | grep aliyun | wc -l`
     if [ $is_exists -eq 0 ]
     then
         echo "server ntp1.aliyun.com" >> /etc/ntp.conf
     fi
-    ansible_command "systemctl start ntpd"
-    ansible_command "systemctl enable ntpd"
+    ansible all -a "systemctl start ntpd"
+    ansible all -a "systemctl enable ntpd"
     info "ntp done."
     echo
 }
@@ -460,14 +460,14 @@ function set_python {
 function set_tuned {
     info "disable tuned..."
     # 关闭tuned
-    ansible_command "systemctl start tuned"
-    ansible_command "systemctl status tuned"
+    ansible all -a "systemctl start tuned"
+    ansible all -a "systemctl status tuned"
     # 显示No current active profile
-    ansible_command "tuned-adm off"
-    ansible_command "tuned-adm list"
+    ansible all -a "tuned-adm off"
+    ansible all -a "tuned-adm list"
     # 关闭tuned服务
-    ansible_command "systemctl stop tuned"
-    ansible_command "systemctl disable tuned"    
+    ansible all -a "systemctl stop tuned"
+    ansible all -a "systemctl disable tuned"    
     info "done."
     echo
 }
@@ -484,13 +484,13 @@ function set_hugepage {
     if [ $is_enable -eq 1 ]
     then
         # 关闭
-        ansible_shell "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
-        ansible_shell "echo never > /sys/kernel/mm/transparent_hugepage/defrag"
+        ansible all -m shell -a "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
+        ansible all -m shell -a "echo never > /sys/kernel/mm/transparent_hugepage/defrag"
         # 设置开机关闭
         echo "echo never > /sys/kernel/mm/transparent_hugepage/defrag" >> /etc/rc.local
         echo "echo never > /sys/kernel/mm/transparent_hugepage/enabled" >> /etc/rc.local
         chmod +x /etc/rc.d/rc.local
-        ansible_copy "src=/etc/rc.d/rc.local dest=/etc/rc.d/rc.local"
+        ansible all -m copy -a "src=/etc/rc.d/rc.local dest=/etc/rc.d/rc.local"
         # 在GRUB_CMDLINE_LINUX项目后面添加一个参数：transparent_hugepage=never
         original=`cat /etc/default/grub | grep GRUB_CMDLINE_LINUX | awk -F '="' '{print $2}'`
         result="GRUB_CMDLINE_LINUX=\"transparent_hugepage=never "$original
@@ -498,9 +498,9 @@ function set_hugepage {
         echo $result >> /etc/default/grub
         curr2=`cat /etc/default/grub | grep GRUB_CMDLINE_LINUX`
         info "current: $curr2"
-        ansible_copy "src=/etc/default/grub dest=/etc/default/grub"
+        ansible all -m copy -a "src=/etc/default/grub dest=/etc/default/grub"
         # 重新生成gurb.cfg文件
-        ansible_command "grub2-mkconfig -o /boot/grub2/grub.cfg"
+        ansible all -a "grub2-mkconfig -o /boot/grub2/grub.cfg"
     fi
     info "done."
     echo
@@ -513,11 +513,11 @@ function set_swappiness {
     info "current: $swap_stat"
     if [ ! $swap_stat -eq 1 ]
     then
-        ansible_command "sysctl -w vm.swappiness=1"
+        ansible all -a "sysctl -w vm.swappiness=1"
         echo "vm.swappiness=1" >> /etc/sysctl.conf
         curr=`cat /etc/sysctl.conf | grep swappiness`
         info "current: $curr"
-        ansible_copy "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
+        ansible all -m copy -a "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
     fi
     info "done."
     echo
@@ -530,7 +530,7 @@ function set_tmout {
     if [ $is_exists -eq 0 ]
     then
         echo "TMOUT=900" >> /etc/profile
-        ansible_copy "src=/etc/profile dest=/etc/profile"
+        ansible all -m copy -a "src=/etc/profile dest=/etc/profile"
     else
         info "tmout already installed"
     fi
@@ -564,7 +564,7 @@ function set_kernel {
     else
         info "kernel already installed."
     fi
-    ansible_copy "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
+    ansible all -m copy -a "src=/etc/sysctl.conf dest=/etc/sysctl.conf"
     info "done."
     echo
 }
@@ -583,7 +583,7 @@ function set_maxfiles {
     else
         info "ulimit already installed."
     fi
-    ansible_copy "src=/etc/security/limits.conf dest=/etc/security/limits.conf"
+    ansible all -m copy -a "src=/etc/security/limits.conf dest=/etc/security/limits.conf"
     info "done."
     echo
 }
@@ -957,9 +957,16 @@ test_sys_file=$SELF/test_sys.log
 test_cdh_file=$SELF/test_cdh.log
 
 info "start deploy process."
+exec=$2
+if [[ $exec != "init_sys" && $exec != "init_dev" && $exec != "init_mysql" && $exec != "test_sys" && $exec != "init_cm" && $exec != "install_all" && $exec != "init_config" ]]
+then
+    info "nothing todo,  exit...
+try to use init_sys/init_dev/init_mysql/init_cm/test_sys/install_all/init_config/test_cdh ?"
+    exit 0
+fi
+
 init_config $1
 # 控制主机与用户名、密码
-get_config ${CONFIG_NANME[EXEC]} exec
 get_config ${CONFIG_NANME[CTRL_HOST]} ctrl_host
 get_config ${CONFIG_NANME[USER]} user
 get_config ${CONFIG_NANME[PASSWD]} passwd
@@ -972,43 +979,38 @@ get_config ${CONFIG_NANME[CM_HOST]} cm_host
 get_config ${CONFIG_NANME[CM_INSTALL_PATH]} cm_install_path
 get_config ${CONFIG_NANME[CM_DB_PASSWD]} cm_db_passwd
 get_home $user
-init_hosts
-init_ssh
-install_softs
 
-exec=$2
-if [ $exec == "init_sys" ]
-then
-    init_system
-elif [[ $exec == "init_dev" ]]
-then
-    init_devenv
-elif [[ $exec == "init_mysql" ]]
-then    
-    init_mysql
-elif [[ $exec == "test_sys" ]]
-then 
-    test_system
-elif [[ $exec == "init_cm" ]]
-then
-    init_cm
-elif [[ $exec == "install_all" ]]
-then
-    init_system
-    init_devenv
-    init_mysql
-    init_cm
-    test_system
-elif [[ $exec == "init_config" ]]
+if [ $exec == "init_config" ]
 then
     init_cdh_config
-elif [[ $exec == "test_cdh" ]]
-then
-    test_cdh
 else
-    info "nothing todo,  exit... \n try to use init_sys/init_dev/init_mysql/init_cm/test_sys/install_all/init_config/test_cdh ?"
-    exit 0
+    init_hosts
+    init_ssh
+    install_softs
+    if [ $exec == "init_sys" ]
+    then
+        init_system
+    elif [[ $exec == "init_dev" ]]
+    then
+        init_devenv
+    elif [[ $exec == "init_mysql" ]]
+    then    
+        init_mysql
+    elif [[ $exec == "test_sys" ]]
+    then 
+        test_system
+    elif [[ $exec == "init_cm" ]]
+    then
+        init_cm
+    elif [[ $exec == "install_all" ]]
+    then
+        init_system
+        init_devenv
+        init_mysql
+        init_cm
+        test_system
+    fi
+    get_sysinfo
+    have_fun
+    info "all done!!!"
 fi
-get_sysinfo
-have_fun
-info "all done!!!"
