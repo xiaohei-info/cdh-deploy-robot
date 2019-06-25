@@ -864,29 +864,34 @@ function set_cm {
         # 主机节点安装所有包
         info "install packages in ctrl host: $ctrl_host"
         rpm -ivh --force --nodeps $install_path/cloudera-manager-server-*.rpm
+        # 修改配置文件
+        info "get config cm host: $cm_host"
+        cat /etc/cloudera-scm-agent/config.ini | grep -v server_host > /etc/cloudera-scm-agent/config.ini.tmp
+        info "set cm host to config file."
+        echo "server_host=$cm_host" >> /etc/cloudera-scm-agent/config.ini.tmp
+        mv /etc/cloudera-scm-agent/config.ini /etc/cloudera-scm-agent/config.ini.bak
+        mv /etc/cloudera-scm-agent/config.ini.tmp /etc/cloudera-scm-agent/config.ini
+        ansible_copy "src=/etc/cloudera-scm-agent/config.ini desst=/etc/cloudera-scm-agent/config.ini"
+
+        # cdh
+        info "mv cdh parcels to cm install path."
+        rm -rf $cm_install_path && mkdir -p $cm_install_path
+        cp $install_path/CDH-*.parcel $cm_install_path
+        cp $install_path/manifest.json $cm_install_path
+        # cm数据库配置
+        info "database config."
+        echo -e "com.cloudera.cmf.db.type=mysql\ncom.cloudera.cmf.db.host=$db_host\ncom.cloudera.cmf.db.name=scm\ncom.cloudera.cmf.db.user=scm\ncom.cloudera.cmf.db.setupType=EXTERNAL\ncom.cloudera.cmf.db.password=$cm_db_passwd\n" > /etc/cloudera-scm-server/db.properties
+        cat /etc/cloudera-scm-server/db.properties
+        info "init db..."
+        # 初始化数据库
+        res=`expect $expect_file cm_init $db_host root "$cm_db_passwd" "$cm_db_passwd"`
+        is_succ=`echo $res | grep correctly | wc -l`
+        if [ ! "$is_succ" -eq 1 ]
+        then
+            err "cm db init failed."
+        fi
     fi
-    # 修改配置文件
-    info "get config cm host: $cm_host"
-    cat /etc/cloudera-scm-agent/config.ini | grep -v server_host > /etc/cloudera-scm-agent/config.ini
-    info "set cm host to config file."
-    echo "server_host=$cm_host" >> /etc/cloudera-scm-agent/config.ini
-    # cdh
-    info "mv cdh parcels to cm install path."
-    rm -rf $cm_install_path && mkdir -p $cm_install_path
-    cp $install_path/CDH-*.parcel $cm_install_path
-    cp $install_path/manifest.json $cm_install_path
-    # cm数据库配置
-    info "database config."
-    echo -e "com.cloudera.cmf.db.type=mysql\ncom.cloudera.cmf.db.host=$db_host\ncom.cloudera.cmf.db.name=scm\ncom.cloudera.cmf.db.user=scm\ncom.cloudera.cmf.db.setupType=EXTERNAL\ncom.cloudera.cmf.db.password=$cm_db_passwd\n" > /etc/cloudera-scm-server/db.properties
-    cat /etc/cloudera-scm-server/db.properties
-    info "init db..."
-    # 初始化数据库
-    res=`expect $expect_file cm_init $db_host root "$cm_db_passwd" "$cm_db_passwd"`
-    is_succ=`echo $res | grep correctly | wc -l`
-    if [ ! "$is_succ" -eq 1 ]
-    then
-        err "cm db init failed."
-    fi
+    
     info "start cm server."
     # 启动server
     systemctl restart cloudera-scm-server
@@ -934,7 +939,7 @@ function init_mysql {
 
 function test_system {
     test_network
-    test_io
+    # test_io
     # 内存性能测试
     # 操作系统性能测试
 }
