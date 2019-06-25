@@ -946,7 +946,7 @@ function init_cm {
 function init_cdh_config {
     script=$SELF/deploy_config.sh
     have $script
-    sh $script $config_cdh_file all
+    sh $script all
 }
 
 SELF=$(cd $(dirname $0) && pwd)
@@ -955,7 +955,6 @@ tmp_path=/tmp
 install_path=$tmp_path
 test_sys_file=$SELF/test_sys.log
 test_cdh_file=$SELF/test_cdh.log
-config_cdh_file=$SELF/cdh_config.log
 
 info "start deploy process."
 init_config $1

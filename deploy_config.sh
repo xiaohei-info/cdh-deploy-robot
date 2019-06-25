@@ -1,19 +1,16 @@
 #!/bin/bash
 
-if [ $# -lt 2 ]
+if [ $# -lt 1 ]
 then
     # hdfs/hbase/yarn/spark/kafka/hue/all
-    echo "Usage: <result file path> <type>"
+    echo "Usage: <type>"
     exit 1
 fi
 
-config_result_file=$1
-type=$2
-echo "Configuration\n" > $config_result_file
 declare -A config_map=()
 
 function say {
-    printf '\033[1;4;%sm %s: %s \033[0m\n' "$1" "$2" "$3"
+    printf '\033[1;%sm %s: %s \033[0m\n' "$1" "$2" "$3"
 }
 
 function err {
@@ -59,7 +56,7 @@ function have {
 }
 
 function save {
-    echo -e "$1\n" >> $config_result_file
+    echo -e "$1" >> $config_result_file
 }
 
 # 初始化配置文件
@@ -82,42 +79,37 @@ function init_config {
 
 function hdfs_config {
     info "Getting HDFS Configuration..."
-    info
     save "####HDFS Configuration####"
     # dfs.replication=$hdfs_replication
     get_config hdfs_replication
 
-    hdfs_config_result="
-    Cluster Operator Enable HighAvailability: true\n\
-    core-site.xml Advanced Configuration Code Snippet: hadoop.http.staticuser.user=yarn\n\
-    dfs.replication=$hdfs_replication\n\
-    io.compression.codec=sorg.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.DeflateCodec,org.apache.hadoop.io.compress.SnappyCodec,org.apache.hadoop.io.compress.Lz4Codec\n\
-    dfs.datanode.handler.count=64\n\
-    dfs.datanode.max.transfer.threads=12288\n\
-    dfs.namenode.handler.count=256\n\
-    dfs.namenode.service.handler.count=256\n\
+    hdfs_config_result="Cluster Operator Enable HighAvailability: true
+core-site.xml Advanced Configuration Code Snippet: hadoop.http.staticuser.user=yarn
+dfs.replication=$hdfs_replication
+io.compression.codec=org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.DeflateCodec,org.apache.hadoop.io.compress.SnappyCodec,org.apache.hadoop.io.compress.Lz4Codec
+dfs.datanode.handler.count=64
+dfs.datanode.max.transfer.threads=12288
+dfs.namenode.handler.count=256
+dfs.namenode.service.handler.count=256
     "
     save "$hdfs_config_result"
-    info "hdfs config_result:$hdfs_config_result"
+    info "hdfs config_result:
+$hdfs_config_result"
 }
 
 # 128G的内存至少要配14T硬盘
 # 128G至少需要12T硬盘
 function hbase_config {
     info "Getting HBase Configuration..."
-    info
     save "####HBase Configuration####"
 
-    get_config hdfs_replication
     get_config hdfs_replication
     calc "$machine_disk * $machine_disk_ava_threds" machine_disk_ava_size
     get_config hbase_disk_ava_threds
     calc "$machine_disk_ava_size * $hbase_disk_ava_threds" hbase_disk_ava_size
-    info "hdfs_replication: $hdfs_replication"
     info "machine_disk: $machine_disk G"
     info "machine_disk_ava_threds: $machine_disk_ava_threds"
     info "machine_disk_ava_size: $machine_disk_ava_size G"
-    info "hbase_disk_ava_threds: $hbase_disk_ava_threds"
     info "hbase_disk_ava_size: $hbase_disk_ava_size G"
 
     get_config region_min_size
@@ -125,12 +117,7 @@ function hbase_config {
     get_config best_region_num
     get_config region_size_incr_step
     best_region_size=$region_min_size
-    info "region_min_size: $region_min_size G"
-    info "region_max_size: $region_max_size G"
-    info "best_region_num: $best_region_num"
-    info "region_size_incr_step: $region_size_incr_step G"
     info "init best_region_size: $best_region_size G"
-    info
     while test $best_region_size -le $region_max_size
     do
         calc "$hbase_disk_ava_size / ($best_region_size * $hdfs_replication)" curr_region_size
@@ -167,8 +154,6 @@ function hbase_config {
         fi
     done
 
-    info
-
     if test $best_region_size -ge 10
     then
         info "best_region_size: $best_region_size, max region number in per host: $curr_region_size"
@@ -180,8 +165,6 @@ function hbase_config {
     fi
     #hbase.hregion.max.filesize=$best_region_size
     #
-    info
-    info
 
     # bucketcache配置
     get_config javaheap_max_size
@@ -195,22 +178,10 @@ function hbase_config {
     get_config min_lower_limit
     get_config javaheap_safaty_threds
     
-    info "javaheap_max_size: $javaheap_max_size"
-    info "javaheap_min_size: $javaheap_min_size"
-    info "memstore_flush_size: $memstore_flush_size"
-    info "upper2lower_threds: $upper2lower_threds"
-    info "max_lower_limit: $max_lower_limit"
-    info "min_lower_limit: $min_lower_limit"
-    info "javaheap_safaty_threds: $javaheap_safaty_threds"
-    info
-    
     # lru配置
     get_config lru_memstore_threds
     get_config lru_blockcache_threds
-    info "lru_memstore_threds: $lru_memstore_threds"
-    info "lru_blockcache_threds: $lru_blockcache_threds"
-    info
-    
+
     # 经验值
     calc "$machine_memory * $machine_memory_ava_threds" machine_memory_ava_size
     get_config hbase_memory_ava_threds
@@ -221,7 +192,6 @@ function hbase_config {
     info "machine_memory_ava_threds: $machine_memory_ava_threds"
     info "machine_memory_ava_size: $machine_memory_ava_size"
     info "hbase_memory_ava_size: $hbase_memory_ava_size"
-    info "javaheap_ava_threds: $javaheap_ava_threds"
     info "init best_javaheap: $best_javaheap"
     
     calc "$best_javaheap > $javaheap_max_size" heap_gt_max
@@ -286,76 +256,69 @@ function hbase_config {
         calc "$best_upper_limit - ($best_upper_limit * $upper2lower_threds)" best_lower_limit
         # hfile.block.cache.size=$javaheap_lru_blockcache_threds
         javaheap_lru_blockcache_threds=$lru_blockcache_threds
-    fi
-
-    info 
+    fi 
     
-    gc_config="
-    -XX:+UseG1GC\n
-    -XX:InitiatingHeapOccupancyPercent=65\n
-    -XX:-ResizePLAB\n
-    -XX:MaxGCPauseMillis=90 \n
-    -XX:+UnlockDiagnosticVMOptions\n
-    -XX:+G1SummarizeConcMark\n
-    -XX:+ParallelRefProcEnabled\n
-    -XX:G1HeapRegionSize=32m\n
-    -XX:G1HeapWastePercent=20\n
-    -XX:ConcGCThreads=4\n
-    -XX:ParallelGCThreads=16 \n
-    -XX:MaxTenuringThreshold=1\n
-    -XX:G1MixedGCCountTarget=64\n
-    -XX:+UnlockExperimentalVMOptions\n
-    -XX:G1NewSizePercent=2\n
-    -XX:G1OldCSetRegionThresholdPercent=5\n
+    gc_config="-XX:+UseG1GC
+-XX:InitiatingHeapOccupancyPercent=65
+-XX:-ResizePLAB
+-XX:MaxGCPauseMillis=90 
+-XX:+UnlockDiagnosticVMOptions
+-XX:+G1SummarizeConcMark
+-XX:+ParallelRefProcEnabled
+-XX:G1HeapRegionSize=32m
+-XX:G1HeapWastePercent=20
+-XX:ConcGCThreads=4
+-XX:ParallelGCThreads=16 
+-XX:MaxTenuringThreshold=1
+-XX:G1MixedGCCountTarget=64
+-XX:+UnlockExperimentalVMOptions
+-XX:G1NewSizePercent=2
+-XX:G1OldCSetRegionThresholdPercent=5
     "
-    basic_config="
-    hbase.master.handler.count=256\n\
-    hbase.regionserver.handler.count=256\n\
-    hbase.client.retries.number=3\n\
-    hbase.rpc.timeout=5000\n\
-    hbase.hstore.blockingStoreFiles=100\n\
-    hbase.regionserver.regionSplitLimit=0\n\
+    basic_config="hbase.master.handler.count=256
+hbase.regionserver.handler.count=256
+hbase.client.retries.number=3
+hbase.rpc.timeout=5000
+hbase.hstore.blockingStoreFiles=100
+hbase.regionserver.regionSplitLimit=0
     "
     if test $mode == "lru"
     then
-        hbase_config_result="
-    RegionServer JavaHeap Size: $best_javaheap\n\
-    hbase.hregion.max.filesize=$best_region_size\n\
-    hbase.hregion.memstore.flush.size=$memstore_flush_size\n\
-    hbase.hregion.memstore.block.multiplier=3\n\
-    hbase.regionserver.global.memstore.upperLimit=$best_upper_limit\n\
-    hbase.regionserver.global.memstore.lowerLimit=$best_lower_limit\n\
-    hfile.block.cache.size=$javaheap_lru_blockcache_threds\n\
-    $basic_config
-
-    HBase RegionServer Java Configuration:\n
-    $gc_config
+        hbase_config_result="RegionServer JavaHeap Size: $best_javaheap
+hbase.hregion.max.filesize=$best_region_size
+hbase.hregion.memstore.flush.size=$memstore_flush_size
+hbase.hregion.memstore.block.multiplier=3
+hbase.regionserver.global.memstore.upperLimit=$best_upper_limit
+hbase.regionserver.global.memstore.lowerLimit=$best_lower_limit
+hfile.block.cache.size=$javaheap_lru_blockcache_threds
+$basic_config
+HBase RegionServer Java Configuration:
+$gc_config
     "
     else
-        hbase_config_result="
-    RegionServer JavaHeap Size: $best_javaheap\n\
-    hbase.hregion.max.filesize=$best_region_size\n\
-    hbase.hregion.memstore.flush.size=$memstore_flush_size\n\
-    hbase.hregion.memstore.block.multiplier=3\n\
-    hbase.regionserver.global.memstore.upperLimit=$best_upper_limit\n\
-    hbase.regionserver.global.memstore.lowerLimit=$best_lower_limit\n\
-    hbase.bucketcache.size=$offheap_bucket_size\n\
-    hbase.bucketcache.ioengine=offheap\n\
-    hbase.bucketcache.percentage.in.combinedcache=$offheap_combined_threds\n\
-    hfile.block.cache.size=$javaheap_lru_blockcache_threds\n\
-
-    HBase RegionServer Java Configuration:\n
-    $gc_config
+        hbase_config_result="RegionServer JavaHeap Size: $best_javaheap
+hbase.hregion.max.filesize=$best_region_size
+hbase.hregion.memstore.flush.size=$memstore_flush_size
+hbase.hregion.memstore.block.multiplier=3
+hbase.regionserver.global.memstore.upperLimit=$best_upper_limit
+hbase.regionserver.global.memstore.lowerLimit=$best_lower_limit
+hbase.bucketcache.size=$offheap_bucket_size
+hbase.bucketcache.ioengine=offheap
+hbase.bucketcache.percentage.in.combinedcache=$offheap_combined_threds
+hfile.block.cache.size=$javaheap_lru_blockcache_threds
+$basic_config
+HBase RegionServer Java Configuration:
+$gc_config
     "
     fi
     # 保存配置结果
     save "$hbase_config_result"
-    info "hbase config_result:$hbase_config_result"
+    info "hbase config_result:
+$hbase_config_result"
 }
 
 function yarn_config {
     info "Getting Yarn Configuration..."
-    info
     save "####Yarn Configuration####"
 
     # 
@@ -374,90 +337,90 @@ function yarn_config {
     # yarn.scheduler.maximum-allocation-vcores=$yarn_container_max_cores
     get_config yarn_container_max_cores
 
-    yarn_config_result="
-    Service Monitor Client Configuration: <property><name>mapreduce.output.fileoutputformat.compress</name><value>true</value></property><property><name>mapreduce.output.fileoutputformat.compress.codec</name><value>org.apache.hadoop.io.compress.SnappyCodec</value></property><property><name>io.compression.codecs</name><value>org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.DeflateCodec,org.apache.hadoop.io.compress.SnappyCodec,org.apache.hadoop.io.compress.Lz4Codec</value></property>\n\
-    
-    Yarn Service Mapreduce Advanced Configuration Code Snippet: <property><name>mapreduce.map.output.compress</name><value>true</value></property><property><name>mapred.map.output.compress.codec</name><value>org.apache.hadoop.io.compress.SnappyCodec</value></property>\n\
-    
-    mapreduce.output.fileoutputformat.compress=enable\n\
-    mapreduce.output.fileoutputformat.compress.type=BLOCK\n\
-    mapreduce.output.fileoutputformat.compress.codec=org.apache.hadoop.io.compress.SnappyCodec\n\
-    mapreduce.map.output.compress.codec=org.apache.hadoop.io.compress.SnappyCodec\n\
-    mapreduce.map.output.compress=enable\n\
-    zlib.compress.level=DEFAULT_COMPRESSION\n\
-    yarn.nodemanager.resource.memory-mb=$yarn_nm_memory\n\
-    yarn.app.mapreduce.am.resource.cpu-vcores=$yarn_nm_cores\n\
-    yarn.scheduler.minimum-allocation-mb=$yarn_container_min_memory\n\
-    yarn.scheduler.maximum-allocation-mb=$yarn_container_max_memory\n\
-    yarn.scheduler.minimum-allocation-vcores=$yarn_container_min_cores\n\
-    yarn.scheduler.maximum-allocation-vcores=$yarn_container_max_cores\n\
+    yarn_config_result="Service Monitor Client Configuration: <property><name>mapreduce.output.fileoutputformat.compress</name><value>true</value></property><property><name>mapreduce.output.fileoutputformat.compress.codec</name><value>org.apache.hadoop.io.compress.SnappyCodec</value></property><property><name>io.compression.codecs</name><value>org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.DeflateCodec,org.apache.hadoop.io.compress.SnappyCodec,org.apache.hadoop.io.compress.Lz4Codec</value></property>
+Yarn Service Mapreduce Advanced Configuration Code Snippet: <property><name>mapreduce.map.output.compress</name><value>true</value></property><property><name>mapred.map.output.compress.codec</name><value>org.apache.hadoop.io.compress.SnappyCodec</value></property>
+mapreduce.output.fileoutputformat.compress=enable
+mapreduce.output.fileoutputformat.compress.type=BLOCK
+mapreduce.output.fileoutputformat.compress.codec=org.apache.hadoop.io.compress.SnappyCodec
+mapreduce.map.output.compress.codec=org.apache.hadoop.io.compress.SnappyCodec
+mapreduce.map.output.compress=enable
+zlib.compress.level=DEFAULT_COMPRESSION
+yarn.nodemanager.resource.memory-mb=$yarn_nm_memory
+yarn.app.mapreduce.am.resource.cpu-vcores=$yarn_nm_cores
+yarn.scheduler.minimum-allocation-mb=$yarn_container_min_memory
+yarn.scheduler.maximum-allocation-mb=$yarn_container_max_memory
+yarn.scheduler.minimum-allocation-vcores=$yarn_container_min_cores
+yarn.scheduler.maximum-allocation-vcores=$yarn_container_max_cores
     "
     save "$yarn_config_result"
-    info "yarn config_result:$yarn_config_result"
+    info "yarn config_result:
+$yarn_config_result"
 }
 
 function spark_config {
     info "Getting Spark Configuration..."
-    info
     save "####Spark Configuration####"
 
-    spark_config_result="
-    spark-conf/spark-defaults.conf Spark Client Configuration Code Snippet: \n\
-    spark.driver.extraJavaOptions=-Dfile.encoding=UTF-8\n\
-    spark.executor.extraJavaOptions=-Dfile.encoding=UTF-8\n\
-    spark.hadoop.mapred.output.compress=true\n\
-    spark.hadoop.mapred.output.compression.codec=org.apache.hadoop.io.compress.SnappyCodec\n\
-    spark.hadoop.mapred.output.compression.type=BLOCK\n\
+    spark_config_result="spark-conf/spark-defaults.conf Spark Client Configuration Code Snippet: 
+spark.driver.extraJavaOptions=-Dfile.encoding=UTF-8
+spark.executor.extraJavaOptions=-Dfile.encoding=UTF-8
+spark.hadoop.mapred.output.compress=true
+spark.hadoop.mapred.output.compression.codec=org.apache.hadoop.io.compress.SnappyCodec
+spark.hadoop.mapred.output.compression.type=BLOCK
 
-    spark2-conf/spark-env.sh Client Advanced Configuration Code Snippet: \n\
-    PYSPARK_PYTHON=/usr/bin/python3.6\n\
+spark2-conf/spark-env.sh Client Advanced Configuration Code Snippet: 
+PYSPARK_PYTHON=/usr/bin/python3.6
     "
 
     save "$spark_config_result"
-    info "spark config_result:$spark_config_result"
+    info "spark config_result:
+$spark_config_result"
 }
 
 function kafka_config {
     info "Getting Kafka Configuration..."
-    info
     save "####Kafka Configuration####"
 
     # num.partitions=$num_partitions
     get_config num_partitions
-    kafka_config_result="
-    num.partitions=$num_partitions
+    kafka_config_result="num.partitions=$num_partitions
     "
 
     save "$kafka_config_result"
-    info "kafka config_result:$kafka_config_result"
+    info "kafka config_result:
+$kafka_config_result"
 }
 
 function hue_config {
     info "Getting Hue Configuration..."
-    info
     save "####Hue Configuration####"
 
-    hue_config_result="
-    hue_safety_value.ini:\n\
-    [impala]\n\
-    server_host=\n\
-    server_port=\n\
-
-    impala Service: Impala\n\
+    hue_config_result="impala Service: Impala
+hue_safety_value.ini:
+[impala]
+server_host=
+server_port=
     "
 
     save "$hue_config_result"
-    info "hue config_result:$hue_config_result"
+    info "hue config_result:
+$hue_config_result"
 }
 
+type=$1
 SELF=$(cd $(dirname $0) && pwd)
 cd $SELF
 init_config $SELF/deploy_config.cnf
+config_result_file=$SELF/cdh_config.log
+echo "Configuration" > $config_result_file
+echo "" >> $config_result_file
+
 get_config machine_disk
 get_config machine_disk_ava_threds
 get_config machine_memory
 get_config machine_memory_ava_threds
 get_config machine_cores
+echo
 
 if [ $type == "hdfs" ]
 then
@@ -488,6 +451,8 @@ then
 else
     info "nothing todo, exit... \n try to use hdfs/hbase/yarn/spark/kafka/hue/all ?"
 fi
+
+info "all done!!!"
 
 
 
