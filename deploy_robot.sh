@@ -949,10 +949,6 @@ function init_cdh_config {
     sh $script $config_cdh_file all
 }
 
-function test_cdh {
-
-}
-
 SELF=$(cd $(dirname $0) && pwd)
 cd $SELF
 tmp_path=/tmp
