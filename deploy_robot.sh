@@ -11,8 +11,8 @@ fi
 declare -A CONFIG_NANME=(
     ["EXEC"]="exec_type"
     ["CTRL_HOST"]="control_host"
-    ["USER"]="control_user"
-    ["PASSWD"]="control_passwd"
+    ["USER"]="host_user"
+    ["PASSWD"]="host_passwd"
     ["CONTRAST"]="contrast_host"
     ["DB_HOST"]="mysql_host"
     ["DB_DATA_DIR"]="mysql_data_dir"

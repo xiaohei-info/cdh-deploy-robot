@@ -1,9 +1,9 @@
 # 控制主机-执行脚本的机器
 control_host=cdh2-1
 # 控制主机用户名
-control_user=root
+host_user=root
 # 控制主机密码
-control_passwd=xiaohei.info
+host_passwd=xiaohei.info
 # 网络测试主机
 contrast_host=cdh2-2
 # mysql服务器地址
