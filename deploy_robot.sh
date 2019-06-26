@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-if [ $# -lt 2 ]
+if [ $# -lt 1 ]
 then
     # init_sys/init_dev/init_mysql/init_cm/test_sys/install_all/init_config/test_cdh
-    echo "Usage: <config file> <type>"
+    echo "Usage: <type>"
     exit 1
 fi
 
@@ -959,6 +959,7 @@ tmp_path=/tmp
 install_path=$tmp_path
 test_sys_file=$SELF/test_sys.log
 test_cdh_file=$SELF/test_cdh.log
+config_file=$SELF/deploy-robot.cnf
 
 info "start deploy process."
 exec=$2
@@ -969,7 +970,7 @@ try to use init_sys/init_dev/init_mysql/init_cm/test_sys/install_all/init_config
     exit 0
 fi
 
-init_config $1
+init_config $config_file
 # 控制主机与用户名、密码
 get_config ${CONFIG_NANME[CTRL_HOST]} ctrl_host
 get_config ${CONFIG_NANME[USER]} user
