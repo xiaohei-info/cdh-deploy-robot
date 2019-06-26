@@ -7,7 +7,7 @@ host_passwd=xiaohei.info
 # 网络测试主机
 contrast_host=cdh2-2
 # mysql服务器地址
-mysql_host=cdh2-2
+mysql_host=cdh2-3
 # mysql数据路径
 mysql_data_dir=/root/mysql/data
 # mysql binlog路径
