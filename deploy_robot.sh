@@ -903,16 +903,26 @@ function set_cm {
     echo
 }
 
+function need_ssh {
+    if [ ! -f /tmp/hosts.bak ]
+    then
+        err "hosts not set, it may means ssh not init. try tu use <sh deploy_robot.sh init_ssh>."
+    fi
+}
+
 function init_ssh {
     set_hosts
 }
 
 function install_softs {
+    need_ssh
     install_ansible
     set_yum
 }
 
 function init_system {
+    need_ssh
+    need_cmd ansible
     set_selinux
     set_ipv6
     set_firewall
@@ -926,6 +936,8 @@ function init_system {
 }
 
 function init_devenv {
+    need_ssh
+    need_cmd ansible
     set_java
     set_scala
     set_profile
@@ -933,10 +945,12 @@ function init_devenv {
 }
 
 function init_mysql {
+    need_ssh
     set_mysql
 }
 
 function test_system {
+    need_ssh
     test_network
     test_io
     # 内存性能测试
@@ -944,6 +958,8 @@ function test_system {
 }
 
 function init_cm {
+    need_ssh
+    need_cmd ansible
     set_cm
 }
 
@@ -963,12 +979,6 @@ config_file=$SELF/deploy-robot.cnf
 
 info "start deploy process."
 exec=$2
-if [[ $exec != "init_sys" && $exec != "init_dev" && $exec != "init_mysql" && $exec != "test_sys" && $exec != "init_cm" && $exec != "install_all" && $exec != "init_config" ]]
-then
-    info "nothing todo,  exit...
-try to use init_sys/init_dev/init_mysql/init_cm/test_sys/install_all/init_config/test_cdh ?"
-    exit 0
-fi
 
 init_config $config_file
 # 控制主机与用户名、密码
@@ -984,38 +994,45 @@ get_config ${CONFIG_NANME[CM_HOST]} cm_host
 get_config ${CONFIG_NANME[CM_INSTALL_PATH]} cm_install_path
 get_config ${CONFIG_NANME[CM_DB_PASSWD]} cm_db_passwd
 get_home $user
+init_hosts
 
-if [ $exec == "init_config" ]
+if [ $exec == "init_ssh" ]
+then
+    init_ssh
+if [ $exec == "install_softs" ]
+then
+    install_softs
+if [ $exec == "init_sys" ]
+then
+    init_system
+elif [[ $exec == "init_dev" ]]
+then
+    init_devenv
+elif [[ $exec == "init_mysql" ]]
+then    
+    init_mysql
+elif [[ $exec == "test_sys" ]]
+then 
+    test_system
+elif [[ $exec == "init_cm" ]]
+then
+    init_cm
+elif [[ $exec == "install_all" ]]
+then
+    init_system
+    init_devenv
+    init_mysql
+    init_cm
+    test_system
+elif [[ $exec == "init_config" ]]
 then
     init_cdh_config
 else
-    init_hosts
-    init_ssh
-    install_softs
-    if [ $exec == "init_sys" ]
-    then
-        init_system
-    elif [[ $exec == "init_dev" ]]
-    then
-        init_devenv
-    elif [[ $exec == "init_mysql" ]]
-    then    
-        init_mysql
-    elif [[ $exec == "test_sys" ]]
-    then 
-        test_system
-    elif [[ $exec == "init_cm" ]]
-    then
-        init_cm
-    elif [[ $exec == "install_all" ]]
-    then
-        init_system
-        init_devenv
-        init_mysql
-        init_cm
-        test_system
-    fi
-    get_sysinfo
-    have_fun
-    info "all done!!!"
+    info "nothing todo,  exit...
+try to use init_sys/init_dev/init_mysql/init_cm/test_sys/install_all/init_config ?"
+    exit 0
 fi
+
+get_sysinfo
+have_fun
+info "all done!!!"
