@@ -938,7 +938,7 @@ function init_mysql {
 
 function test_system {
     test_network
-    # test_io
+    test_io
     # 内存性能测试
     # 操作系统性能测试
 }
