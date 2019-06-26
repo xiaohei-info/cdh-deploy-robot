@@ -1,0 +1,39 @@
+# 主机配置
+machine_disk=10240
+machine_disk_ava_threds=0.85
+machine_memory=72
+machine_memory_ava_threds=0.85
+machine_cores=8
+
+# hdfs
+hdfs_replication=3
+enable_compression=true
+
+# hbase
+hbase_disk_ava_threds=1
+hbase_memory_ava_threds=1
+javaheap_ava_threds=0.35
+javaheap_safaty_threds=0.79
+javaheap_max_size=56
+javaheap_min_size=4
+region_min_size=10
+region_max_size=30
+best_region_num=200
+region_size_incr_step=5
+memstore_flush_size=256
+upper2lower_threds=0.1
+max_lower_limit=0.7
+min_lower_limit=0.4
+lru_memstore_threds=0.45
+lru_blockcache_threds=0.3
+
+# yarn
+yarn_core_ava_threds=0.8
+yarn_memory_ava_threds=0.8
+yarn_container_min_memory=1
+yarn_container_max_memory=10
+yarn_container_min_cores=1
+yarn_container_max_cores=10
+
+# kafka
+num_partitions=8
