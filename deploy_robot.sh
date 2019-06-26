@@ -9,7 +9,6 @@ fi
 
 # 定义配置项
 declare -A CONFIG_NANME=(
-    ["EXEC"]="exec_type"
     ["CTRL_HOST"]="control_host"
     ["USER"]="host_user"
     ["PASSWD"]="host_passwd"
@@ -964,7 +963,7 @@ function init_cm {
 }
 
 function init_cdh_config {
-    script=$SELF/deploy_config.sh
+    script=$SELF/cdh_config.sh
     have $script
     sh $script all
 }
