@@ -85,6 +85,9 @@ function hdfs_config {
 
     hdfs_config_result="Cluster Operator Enable HighAvailability: true
 core-site.xml Advanced Configuration Code Snippet: hadoop.http.staticuser.user=yarn
+dfs.name.dir
+dfs.data.dir
+dfs.datanode.max.xcievers
 dfs.replication=$hdfs_replication
 io.compression.codec=org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.DeflateCodec,org.apache.hadoop.io.compress.SnappyCodec,org.apache.hadoop.io.compress.Lz4Codec
 dfs.datanode.handler.count=64
@@ -281,6 +284,12 @@ hbase.client.retries.number=3
 hbase.rpc.timeout=5000
 hbase.hstore.blockingStoreFiles=100
 hbase.regionserver.regionSplitLimit=0
+hbase.client.write.buffer=8M
+hbase.client.scanner.caching=100
+hbase.hregion.majorcompaction=0
+hbase.hstore.compactionThreshold=6
+hbase.regionserver.thread.compaction.large=5
+hbase.regionserver.region.split.policy=org.apache.hadoop.hbase.regionserver.ConstantSizeRegionSplitPolicy
     "
     if test $mode == "lru"
     then

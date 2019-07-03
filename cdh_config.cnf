@@ -11,7 +11,7 @@ enable_compression=true
 
 # hbase
 hbase_disk_ava_threds=1
-hbase_memory_ava_threds=1
+hbase_memory_ava_threds=0.8
 javaheap_ava_threds=0.35
 javaheap_safaty_threds=0.79
 javaheap_max_size=56
