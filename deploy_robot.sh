@@ -156,7 +156,6 @@ function set_hosts {
     info "start setting /etc/hosts and config ssh keys."
     yum install -y expect
     need_cmd expect
-    expect_file=$SELF/expect.sh
     have $expect_file
     if [ -f /tmp/hosts.bak ]
     then
@@ -345,9 +344,9 @@ function set_java {
         info "get jdk $java_file,scp to all hosts..."
         ansible_copy "src=$java_file dest=$java_file"
         ansible_shell "yum localinstall -y $java_file"
-        jdk_name=`ls /usr/java*`
+        jdk_name=`ls /usr/java/`
         jdk_path="/usr/java/$jdk_name"
-        is_exists=`ls -al /usr/java* | grep jdk | wc -l`
+        is_exists=`ls -al /usr/java/ | grep jdk | grep -v default | wc -l`
         if [ $is_exists -eq 1 ]
         then
             info "jdk path: $jdk_path"
@@ -408,7 +407,7 @@ function set_python {
         info "install dev packages, wait a moment..."
         ansible_command "yum install -y openssl-devel bzip2-devel expat-devel gdbm-devel readline-devel sqlite-devel gcc-c++ python36-devel cyrus-sasl-lib.x86_64 cyrus-sasl-devel.x86_64 libgsasl-devel.x86_64 epel-release"
         # yum源下载
-        ansible_command "yum install https://centos7.iuscommunity.org/ius-release.rpm -y"
+        ansible all -a "yum install https://centos7.iuscommunity.org/ius-release.rpm -y"
         # 安装python3.6
         info "install python36..."
         ansible_command "yum install python36 -y"
@@ -420,9 +419,9 @@ function set_python {
     if ! check_cmd easy_install-3.6; then
         # 安装setuptools
         info "install setuptools, wait a moment..."
-        ansible_command "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/s/setuptools/setuptools-19.6.tar.gz#md5=c607dd118eae682c44ed146367a17e26"
-        ansible_shell "cd $install_path && tar -zxvf setuptools-19.6.tar.gz"
-        ansible_shell "cd $install_path/setuptools-19.6 && python3.6 setup.py build && python3.6 setup.py install"
+        ansible all -a "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/s/setuptools/setuptools-19.6.tar.gz#md5=c607dd118eae682c44ed146367a17e26"
+        ansible all -m shell -a "cd $install_path && tar -zxvf setuptools-19.6.tar.gz"
+        ansible all -m shell -a "cd $install_path/setuptools-19.6 && python3.6 setup.py build && python3.6 setup.py install"
     else
         info "easy_install-3.6 already installed."
     fi
@@ -430,20 +429,20 @@ function set_python {
     if ! check_cmd pip3.6; then
         # 安装pip3.6
         info "install pip, wait a moment..."
-        ansible_command "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/p/pip/pip-8.0.2.tar.gz#md5=3a73c4188f8dbad6a1e6f6d44d117eeb"
-        ansible_shell "cd $install_path && tar -zxvf pip-8.0.2.tar.gz"
-        ansible_shell "cd $install_path/pip-8.0.2 && python3.6 setup.py build && python3.6 setup.py install"
+        ansible all -a "wget -P $install_path --no-check-certificate https://pypi.python.org/packages/source/p/pip/pip-8.0.2.tar.gz#md5=3a73c4188f8dbad6a1e6f6d44d117eeb"
+        ansible all -m shell -a "cd $install_path && tar -zxvf pip-8.0.2.tar.gz"
+        ansible all -m shell -a "cd $install_path/pip-8.0.2 && python3.6 setup.py build && python3.6 setup.py install"
     else
         info "pip3.6 already installed."
     fi
 
     # 修改pip源
     info "change pip source."
-    ansible_shell "rm -rf $user_home/.pip && mkdir $user_home/.pip"
+    ansible all -m shell -a "rm -rf $user_home/.pip && mkdir $user_home/.pip"
     echo -e "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple" > $user_home/.pip/pip.conf
-    ansible_copy "src=$user_home/.pip/pip.conf dest=$user_home/.pip/pip.conf"
-    ansible_command "easy_install-3.6 -U setuptools"
-    ansible_command "pip3.6 install --upgrade pip"
+    ansible all -m copy -a "src=$user_home/.pip/pip.conf dest=$user_home/.pip/pip.conf"
+    ansible all -m shell -a all -a "easy_install-3.6 -U setuptools"
+    ansible all -m shell -a all -a "pip3.6 install --upgrade pip"
     # python依赖包安装
     # info "install requirements"
     # python_require_path=$SELF/py_requirements.txt
@@ -835,7 +834,7 @@ function set_cm {
     # 安装cm软件包
     info "start set cloudera manager..."
     # 是否已安装
-    is_exists=`systemctl status cloudera-scm-agent`
+    is_exists=`systemctl status cloudera-scm-server`
     if [ ! -z "$is_exists" ]
     then
         info "cm already installed."
@@ -880,24 +879,29 @@ function set_cm {
         info "database config."
         echo -e "com.cloudera.cmf.db.type=mysql\ncom.cloudera.cmf.db.host=$db_host\ncom.cloudera.cmf.db.name=scm\ncom.cloudera.cmf.db.user=scm\ncom.cloudera.cmf.db.setupType=EXTERNAL\ncom.cloudera.cmf.db.password=$cm_db_passwd\n" > /etc/cloudera-scm-server/db.properties
         cat /etc/cloudera-scm-server/db.properties
-        info "init db..."
-        # 初始化数据库
-        res=`expect $expect_file cm_init $db_host root "$cm_db_passwd" "$cm_db_passwd"`
-        is_succ=`echo $res | grep correctly | wc -l`
-        if [ ! "$is_succ" -eq 1 ]
-        then
-            err "cm db init failed."
-        fi
+    fi
+
+    systemctl stop cloudera-scm-server
+    ansible all -a "systemctl stop cloudera-scm-agent"
+
+    # 初始化数据库
+    info "init db..."
+    info "expect_file: $expect_file"
+    res=`expect $expect_file cm_init $db_host root "$cm_db_passwd" "$cm_db_passwd"`
+    is_succ=`echo $res | grep correctly | wc -l`
+    if [ ! "$is_succ" -eq 1 ]
+    then
+        err "cm db init failed."
     fi
     
     info "start cm server."
     # 启动server
-    systemctl restart cloudera-scm-server
+    systemctl start cloudera-scm-server
     # 查看日志
     # tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
     info "start all cm agent."
     # 各个节点上启动agent
-    ansible_command "systemctl restart cloudera-scm-agent"
+    ansible_command "systemctl start cloudera-scm-agent"
     info "done."
     echo
 }
@@ -975,6 +979,7 @@ install_path=$tmp_path
 test_sys_file=$SELF/test_sys.log
 test_cdh_file=$SELF/test_cdh.log
 config_file=$SELF/deploy_robot.config
+expect_file=$SELF/expect.sh
 
 info "start deploy process."
 exec=$1
