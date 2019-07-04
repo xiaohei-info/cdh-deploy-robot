@@ -102,6 +102,9 @@ vi deploy-robot.cnf
 ### 2.5 执行脚本
 
 ```shell
+# 配置ssh
+sh deploy-robot.sh init_ssh
+# 执行安装
 sh deploy-robot.sh install_all
 ```
 
@@ -112,17 +115,17 @@ That's All!
 ### 3.1 脚本参数
 
 ```shell
-sh deploy-robot.sh 
+sh deploy_robot.sh 
 Usage: <type>
 ```
 
 执行脚本需要指定「**执行类型**」参数。
 
-除了Features中各个功能的执行参数之外，**install_all** 将会依次执行1-7步骤。
+除了Features中各个功能的执行参数之外，**install_all** 将会依次执行2-7步骤。
 
-### 3.2 CDH组件配置建议
+### 3.2 配置建议脚本
 
-「**配置建议脚本**」 将会读取节点基本配置与相关设置规则信息（cdh_config.cnf），由此计算并输出CDH各个组件的 **重要配置项** 推荐内容。
+「**配置建议脚本**」 将会读取节点基本配置与相关设置规则信息（config_robot.config），由此计算并输出CDH各个组件的 **重要配置项** 推荐内容。
 
 安装脚本中 install_all 选项将不会执行此步骤，需要单独执行 init_config 选项（调用「配置建议脚本」参数为all）。
 
@@ -131,7 +134,7 @@ Usage: <type>
 #### 3.2.1 执行配置建议脚本
 
 ```
-sh cdh_config.sh
+sh config_robot.sh
 Usage: <type>
 ```
 
@@ -217,7 +220,7 @@ Usage: <type>
 
 输出的配置内容为组件部署完毕后需要调整的配置项，提供参考。
 
-#### 3.2.3 cdh_config.cnf 配置文件说明
+#### 3.2.3 config_robot.config 配置文件说明
 
 ```shell
 # 节点配置
@@ -318,9 +321,9 @@ pip3.6 install -r py_requirements.txt
 
 ### 4.1 注意事项
 
-1. 使用安装脚本时，如果已生成过ssh密钥，那么ssh的key与认证信息将被**重置**。如果之前配置过ssh信息请注意更新ssh key。或者选择不要执行init_ssh，手动进行ssh配置。
+1. 使用init_ssh设置免密登录时，如果已生成过ssh密钥，那么ssh的key与认证信息将被**重置**。如果之前配置过ssh信息请注意更新ssh key。或者选择不要执行init_ssh，手动进行ssh配置。
 2. 建议在即将投入生产或者干净的主机上运行，以免破坏已有生产系统环境。
-3. CM安装过程中**不会启用SSL**
+3. CM安装过程中**不会启用SSL**。
 
 ### 4.2 TODO LIST
 
