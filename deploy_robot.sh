@@ -963,7 +963,7 @@ function init_cm {
 }
 
 function init_cdh_config {
-    script=$SELF/cdh_config.sh
+    script=$SELF/config_robot.sh
     have $script
     sh $script all
 }
@@ -974,10 +974,10 @@ tmp_path=/tmp
 install_path=$tmp_path
 test_sys_file=$SELF/test_sys.log
 test_cdh_file=$SELF/test_cdh.log
-config_file=$SELF/deploy-robot.cnf
+config_file=$SELF/deploy_robot.config
 
 info "start deploy process."
-exec=$2
+exec=$1
 
 init_config $config_file
 # 控制主机与用户名、密码
@@ -998,32 +998,33 @@ init_hosts
 if [ $exec == "init_ssh" ]
 then
     init_ssh
-if [ $exec == "install_softs" ]
+elif [ $exec == "install_softs" ]
 then
     install_softs
-if [ $exec == "init_sys" ]
+elif [ $exec == "init_sys" ]
 then
     init_system
-elif [[ $exec == "init_dev" ]]
+elif [ $exec == "init_dev" ]
 then
     init_devenv
-elif [[ $exec == "init_mysql" ]]
+elif [ $exec == "init_mysql" ]
 then    
     init_mysql
-elif [[ $exec == "test_sys" ]]
+elif [ $exec == "test_sys" ]
 then 
     test_system
-elif [[ $exec == "init_cm" ]]
+elif [ $exec == "init_cm" ]
 then
     init_cm
-elif [[ $exec == "install_all" ]]
+elif [ $exec == "install_all" ]
 then
+    install_softs
     init_system
     init_devenv
     init_mysql
     init_cm
     test_system
-elif [[ $exec == "init_config" ]]
+elif [ $exec == "init_config" ]
 then
     init_cdh_config
 else

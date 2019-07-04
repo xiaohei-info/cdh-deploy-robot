@@ -419,8 +419,8 @@ $hue_config_result"
 type=$1
 SELF=$(cd $(dirname $0) && pwd)
 cd $SELF
-init_config $SELF/cdh_config.cnf
-config_result_file=$SELF/cdh_config.log
+init_config $SELF/config_robot.config
+config_result_file=$SELF/config_robot.log
 echo "Configuration" > $config_result_file
 echo "" >> $config_result_file
 
@@ -458,7 +458,8 @@ then
     kafka_config
     hue_config
 else
-    info "nothing todo, exit... \n try to use hdfs/hbase/yarn/spark/kafka/hue/all ?"
+    info "nothing todo, exit...
+try to use hdfs/hbase/yarn/spark/kafka/hue/all ?"
 fi
 
 info "configuration save to $config_result_file"
