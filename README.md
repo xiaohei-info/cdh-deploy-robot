@@ -69,8 +69,8 @@ CDH集群安装与部署的自动化脚本工具，简单支持「**一键装机
 
 ```shell
 yum install -y git
-git clone https://github.com/chubbyjiang/cdh-deploy-robot.git
-cd cdh-deploy-robot
+git clone https://github.com/chubbyjiang/cdh-deploy_robot.git
+cd cdh-deploy_robot
 ```
 
 ### 2.3 修改hosts文件
@@ -84,7 +84,7 @@ vi hosts
 ### 2.4 修改配置文件
 
 ```shell
-vi deploy-robot.cnf
+vi deploy_robot.config
 ```
 
 - control_host: 控制主机节点hostname
@@ -103,9 +103,9 @@ vi deploy-robot.cnf
 
 ```shell
 # 配置ssh
-sh deploy-robot.sh init_ssh
+sh deploy_robot.sh init_ssh
 # 执行安装
-sh deploy-robot.sh install_all
+sh deploy_robot.sh install_all
 ```
 
 That's All!
