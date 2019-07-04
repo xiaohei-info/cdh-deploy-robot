@@ -344,7 +344,7 @@ function set_java {
         info "get jdk $java_file,scp to all hosts..."
         ansible_copy "src=$java_file dest=$java_file"
         ansible_shell "yum localinstall -y $java_file"
-        jdk_name=`ls /usr/java/`
+        jdk_name=`ls /usr/java/ | grep -v default`
         jdk_path="/usr/java/$jdk_name"
         is_exists=`ls -al /usr/java/ | grep jdk | grep -v default | wc -l`
         if [ $is_exists -eq 1 ]
