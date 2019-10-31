@@ -70,7 +70,7 @@ CDH集群安装与部署的自动化脚本工具，简单支持「**一键装机
 ```shell
 yum install -y git
 git clone https://github.com/chubbyjiang/cdh-deploy-robot.git
-cd cdh-deploy_robot
+cd cdh-deploy-robot
 ```
 
 ### 2.3 修改hosts文件
