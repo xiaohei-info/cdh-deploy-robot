@@ -699,9 +699,10 @@ function set_mysql {
         info "scp done."
     
         info "install mysql, wait a moment..."
+        mariadb_name=`ssh $db_host "rpm -qa|grep -i mariadb"`
+        echo "mariadb: $mariadb_name"
         ssh $db_host <<EOF
-        rpm -qa|grep -i mariadb
-        rpm -e mariadb-libs-5.5.60-1.el7_5.x86_64 --nodeps
+        rpm -e $mariadb_name --nodeps
         rpm -ivh $common_file
         rpm -ivh $libs_file
         rpm -ivh $client_file
