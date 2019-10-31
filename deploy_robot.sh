@@ -876,6 +876,8 @@ function set_cm {
         rm -rf $cm_install_path && mkdir -p $cm_install_path
         cp $install_path/CDH-*.parcel $cm_install_path
         cp $install_path/manifest.json $cm_install_path
+        parcel_file=`ls $cm_install_path/CDH-*.parcel`
+        sha1sum $parcel_file | awk '{ print $1 }' > $parcel_file.sha
         # cm数据库配置
         info "database config."
         echo -e "com.cloudera.cmf.db.type=mysql\ncom.cloudera.cmf.db.host=$db_host\ncom.cloudera.cmf.db.name=scm\ncom.cloudera.cmf.db.user=scm\ncom.cloudera.cmf.db.setupType=EXTERNAL\ncom.cloudera.cmf.db.password=$cm_db_passwd\n" > /etc/cloudera-scm-server/db.properties
