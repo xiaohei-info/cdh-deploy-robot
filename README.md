@@ -116,7 +116,7 @@ tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
 # 等待几分钟后看到 Started Jetty server.
 ```
 
-访问cm主机的7180端口即可。
+访问cm主机的7180端口即可，账号密码为默认的admin/admin，登录即可。
 
 ## 三、使用说明
 
