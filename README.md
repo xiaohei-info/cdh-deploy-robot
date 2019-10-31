@@ -110,6 +110,14 @@ sh deploy_robot.sh install_all
 
 That's All!
 
+```shell
+# 查看server启动日志
+tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
+# 等待几分钟后看到 Started Jetty server.
+```
+
+访问cm主机的7180端口即可。
+
 ## 三、使用说明
 
 ### 3.1 脚本参数
