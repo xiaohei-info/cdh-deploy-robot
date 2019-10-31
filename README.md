@@ -118,6 +118,8 @@ tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
 
 访问cm主机的7180端口即可，账号密码为默认的admin/admin，登录即可。
 
+安装CDH时需要将xxx.parcel/xxx.parcel.sha1/xxx.parcel.sha256/manifest.json 等文件移动到 /opt/cloudera/parcel-repo 目录下，否则CM将会自动联网下载。
+
 ## 三、使用说明
 
 ### 3.1 脚本参数
