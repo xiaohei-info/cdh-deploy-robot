@@ -1,7 +1,7 @@
 #/bin/bash
 
 # ds安装路径
-ds_install_path=/opt/escheduler
+ds_install_path=/root/escheduler
 
 # zk地址列表
 zk_hosts="bigdata-1.baofoo.cn:2181,bigdata-2.baofoo.cn:2181,bigdata-3.baofoo.cn:2181"
