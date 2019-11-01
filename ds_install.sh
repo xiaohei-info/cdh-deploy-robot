@@ -1,7 +1,7 @@
 #/bin/bash
 
 # ds安装路径
-ds_install_path=/opt/escheduler
+ds_install_path=/tmp/ds_install
 
 db_host=cdh2-3
 
