@@ -83,7 +83,6 @@ sh $ds_backend_install_path/script/create_escheduler.sh
 sed -i 's/mysqlHost="192.168.xx.xx:3306"/mysqlHost="'$db_host':3306"/' $ds_backend_install_path/install.sh
 sed -i 's/mysqlUserName="xx"/mysqlUserName="escheduler"/' $ds_backend_install_path/install.sh
 sed -i 's/mysqlPassword="xx"/mysqlPassword="escheduler@DW"/' $ds_backend_install_path/install.sh
-sed -i 's/data1_1T/opt/' $ds_backend_install_path/install.sh
 sed -i 's/deployUser="escheduler"/deployUser="root"/' $ds_backend_install_path/install.sh
 sed -i "s/192.168.xx.xx:2181,192.168.xx.xx:2181,192.168.xx.xx:2181/$zk_hosts/" $ds_backend_install_path/install.sh
 sed -i 's/ips="ark0,ark1,ark2,ark3,ark4"/ips="'$ips'"/' $ds_backend_install_path/install.sh
@@ -94,6 +93,8 @@ sed -i 's/apiServers="ark1"/apiServers="'$apiServers'"/' $ds_backend_install_pat
 sed -i 's/mycluster:8020/ns1:8020/' $ds_backend_install_path/install.sh
 sed -i 's/yarnHaIps="192.168.xx.xx,192.168.xx.xx"/yarnHaIps="'$yarnHaIps'"/' $ds_backend_install_path/install.sh
 sed -i 's/singleYarnIp="ark1"/singleYarnIp="'$singleYarnIp'"/' $ds_backend_install_path/install.sh
+# cat $ds_backend_install_path/install.sh | grep -v 'installPath=' > $ds_backend_install_path/install.sh
+# echo 'installPath="$ds_install_path"' >> $ds_backend_install_path/install.sh
 
 info "install.sh edited."
 
@@ -123,5 +124,5 @@ cd $ds_backend_install_path && sh $ds_backend_install_path/install.sh
 
 info "install ui"
 
-cd $ds_ui_install_path && sh $ds_ui_install_path/install-escheduler-ui.sh
+cd $ds_ui_install_path && sh install-escheduler-ui.sh
 
