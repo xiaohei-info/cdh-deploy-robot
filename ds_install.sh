@@ -1,31 +1,35 @@
 #/bin/bash
 
 # ds安装路径
-ds_install_path=/root/escheduler
+ds_install_path=/tmp/ds_install
+
+db_host=cdh2-3
+
+mysql_passwd=
 
 # zk地址列表
-zk_hosts="bigdata-1.baofoo.cn:2181,bigdata-2.baofoo.cn:2181,bigdata-3.baofoo.cn:2181"
+zk_hosts=cdh2-1:2181,cdh2-2:2181,cdh2-3:2181
 
 # 所有可用节点列表
-ips="bigdata-1.baofoo.cn,bigdata-2.baofoo.cn,bigdata-3.baofoo.cn"
+ips=cdh2-1,cdh2-2,cdh2-3
 
 # master节点列表
-masters="bigdata-1.baofoo.cn"
+masters=cdh2-1
 
 # work节点列表
-workers="bigdata-2.baofoo.cn,bigdata-3.baofoo.cn"
+workers=cdh2-2,cdh2-3
 
 # 警报服务器节点
-alertServer="bigdata-1.baofoo.cn"
+alertServer=cdh2-1
 
 # 后端api服务器节点
-apiServers="bigdata-1.baofoo.cn"
+apiServers=cdh2-1
 
 # yarn ha 节点列表，没有ha则填空字符串
 yarnHaIps=""
 
 # yarn单节点
-singleYarnIp="bigdata-1.baofoo.cn"
+singleYarnIp=cdh2-1
 
 ds_backend_install_path=$ds_install_path/escheduler-backend
 ds_ui_install_path=$ds_install_path/escheduler-ui
