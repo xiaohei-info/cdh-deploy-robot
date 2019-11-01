@@ -1,7 +1,7 @@
 #/bin/bash
 
 # ds安装路径
-ds_install_path=/tmp/ds_install
+ds_install_path=/opt/escheduler
 
 db_host=cdh2-3
 
@@ -84,6 +84,7 @@ sed -i 's/mysqlHost="192.168.xx.xx:3306"/mysqlHost="'$db_host':3306"/' $ds_backe
 sed -i 's/mysqlUserName="xx"/mysqlUserName="escheduler"/' $ds_backend_install_path/install.sh
 sed -i 's/mysqlPassword="xx"/mysqlPassword="escheduler@DW"/' $ds_backend_install_path/install.sh
 sed -i 's/deployUser="escheduler"/deployUser="root"/' $ds_backend_install_path/install.sh
+sed -i 's/data1_1T/opt/' $ds_backend_install_path/install.sh
 sed -i "s/192.168.xx.xx:2181,192.168.xx.xx:2181,192.168.xx.xx:2181/$zk_hosts/" $ds_backend_install_path/install.sh
 sed -i 's/ips="ark0,ark1,ark2,ark3,ark4"/ips="'$ips'"/' $ds_backend_install_path/install.sh
 sed -i 's/masters="ark0,ark1"/masters="'$masters'"/' $ds_backend_install_path/install.sh
