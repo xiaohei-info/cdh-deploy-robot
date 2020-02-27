@@ -45,21 +45,21 @@ function info {
 }
 
 
-ds_backend_install_path=$ds_install_path/escheduler-backend
-ds_ui_install_path=$ds_install_path/escheduler-ui
+ds_backend_install_path=$ds_install_path/dolphinscheduler-backend
+ds_ui_install_path=$ds_install_path/dolphinscheduler-front
 
 info "ds_backend_install_path: $ds_backend_install_path"
 info "ds_ui_install_path: $ds_ui_install_path"
 
 mkdir -p $ds_install_path
 mkdir $ds_backend_install_path $ds_ui_install_path
-mv /tmp/escheduler-*-backend.tar.gz $ds_install_path/escheduler-backend
-mv /tmp/escheduler-*-ui.tar.gz $ds_install_path/escheduler-ui
+mv /tmp/apache-dolphinscheduler-*-backend-bin.tar.gz $ds_install_path/dolphinscheduler-backend
+mv /tmp/apache-dolphinscheduler-*-front-bin.tar.gz $ds_install_path/dolphinscheduler-front
 
 info "get gz file, start unzip..."
 
-cd $ds_install_path/escheduler-backend && tar -zxvf *.tar.gz && rm -rf *.tar.gz
-cd $ds_install_path/escheduler-ui && tar -zxvf *.tar.gz && rm -rf *.tar.gz
+cd $ds_install_path/dolphinscheduler-backend && tar -zxvf *.tar.gz && rm -rf *.tar.gz
+cd $ds_install_path/dolphinscheduler-front && tar -zxvf *.tar.gz && rm -rf *.tar.gz
 
 info "unzip done."
 
