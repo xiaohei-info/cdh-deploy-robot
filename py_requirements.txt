@@ -21,7 +21,7 @@ gast==0.2.0
 grpcio==1.10.1
 h5py==2.7.1
 hdfs==2.1.0
-html5lib==0.9999999
+html5lib==0.999999999
 hyperas==0.4
 hyperopt==0.1
 ibis-framework==0.13.0
