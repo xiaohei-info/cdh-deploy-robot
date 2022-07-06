@@ -44,7 +44,7 @@ jupyter-core==4.4.0
 kazoo==2.5.0
 Keras==2.1.5
 lightgbm==2.1.1
-lxml==4.2.4
+lxml==4.9.1
 Markdown==2.6.10
 MarkupSafe==1.0
 matplotlib==2.1.0
